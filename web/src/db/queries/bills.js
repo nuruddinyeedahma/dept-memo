@@ -115,6 +115,26 @@ export async function getShopBills(shopId) {
   return bills.map((b) => ({ ...b, imported: !!b.imported, paid: b.paymentId !== null }));
 }
 
+export async function getShopPayments(shopId) {
+  await getShopById(shopId);
+  const rawPayments = await all(
+    'SELECT id, paid_at AS paidAt, amount, note FROM payments WHERE shop_id = ? ORDER BY paid_at DESC, id DESC',
+    [shopId]
+  );
+  const payments = [];
+  for (const p of rawPayments) {
+    const coveredBills = await all(
+      `SELECT b.id, b.imported, b.cleared_at AS occurredAt,
+              COALESCE((SELECT SUM(unit_price * quantity) FROM bill_entries WHERE bill_id = b.id), 0) AS amount
+       FROM bills b WHERE b.payment_id = ?
+       ORDER BY b.cleared_at IS NULL ASC, b.cleared_at ASC`,
+      [p.id]
+    );
+    payments.push({ ...p, bills: coveredBills.map((b) => ({ ...b, imported: !!b.imported })) });
+  }
+  return payments;
+}
+
 export async function getHistory(shopId) {
   await getShopById(shopId);
 

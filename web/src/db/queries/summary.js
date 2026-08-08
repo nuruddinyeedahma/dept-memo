@@ -6,7 +6,7 @@ export async function getSummary() {
   const { totalOutstanding, shopsWithDebt } = await get(
     `WITH per_shop AS (
       SELECT s.id,
-        COALESCE(debt.total, 0) AS outstandingDebt
+        COALESCE(debt.total, 0) - COALESCE(freepay.total, 0) AS outstandingDebt
       FROM shops s
       LEFT JOIN (
         SELECT b.shop_id, SUM(be.unit_price * be.quantity) AS total
@@ -14,6 +14,12 @@ export async function getSummary() {
         WHERE b.status = 'cleared' AND b.payment_id IS NULL
         GROUP BY b.shop_id
       ) debt ON debt.shop_id = s.id
+      LEFT JOIN (
+        SELECT p.shop_id, SUM(p.amount) AS total
+        FROM payments p
+        WHERE NOT EXISTS (SELECT 1 FROM bills WHERE payment_id = p.id)
+        GROUP BY p.shop_id
+      ) freepay ON freepay.shop_id = s.id
     )
     SELECT COALESCE(SUM(outstandingDebt), 0) AS totalOutstanding,
            COALESCE(SUM(CASE WHEN outstandingDebt > 0 THEN 1 ELSE 0 END), 0) AS shopsWithDebt

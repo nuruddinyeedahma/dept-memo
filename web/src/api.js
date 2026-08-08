@@ -15,6 +15,8 @@ export const api = {
   getItems: () => items.getItems(),
   createItem: (name, defaultPrice, category) => items.createItem(name, defaultPrice, category),
   updateItem: (id, patch) => items.updateItem(id, patch),
+  getItemShopIds: (itemId) => items.getItemShopIds(itemId),
+  setItemShops: (itemId, shopIds) => items.setItemShops(itemId, shopIds),
 
   getShopPrices: (shopId) => shops.getShopPrices(shopId),
   setShopPrice: (shopId, itemId, price) => shops.setShopPrice(shopId, itemId, price),
@@ -26,7 +28,9 @@ export const api = {
   clearBill: (shopId, note) => bills.clearBill(shopId, note),
 
   getShopBills: (shopId) => bills.getShopBills(shopId),
+  getShopPayments: (shopId) => bills.getShopPayments(shopId),
   createPayment: (shopId, billIds, note) => payments.createPayment(shopId, billIds, note),
+  createDirectPayment: (shopId, amount, note) => payments.createDirectPayment(shopId, amount, note),
   deletePayment: (shopId, paymentId) => payments.deletePayment(shopId, paymentId),
 
   getHistory: (shopId) => bills.getHistory(shopId),

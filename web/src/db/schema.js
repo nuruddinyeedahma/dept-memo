@@ -24,6 +24,12 @@ export const SCHEMA_SQL = `
     PRIMARY KEY (shop_id, item_id)
   );
 
+  CREATE TABLE IF NOT EXISTS item_shops (
+    item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+    PRIMARY KEY (item_id, shop_id)
+  );
+
   CREATE TABLE IF NOT EXISTS payments (
     id INTEGER PRIMARY KEY,
     shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,

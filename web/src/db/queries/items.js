@@ -1,7 +1,33 @@
 import { all, get, run } from '../connection.js';
 
 export async function getItems() {
-  return all('SELECT id, name, default_price AS defaultPrice, category FROM items ORDER BY name');
+  const items = await all('SELECT id, name, default_price AS defaultPrice, category FROM items ORDER BY name');
+  const links = await all('SELECT item_id AS itemId, shop_id AS shopId FROM item_shops');
+  const byItem = new Map();
+  for (const l of links) {
+    if (!byItem.has(l.itemId)) byItem.set(l.itemId, []);
+    byItem.get(l.itemId).push(l.shopId);
+  }
+  return items.map((item) => {
+    const shopIds = byItem.get(item.id) ?? [];
+    return { ...item, shopIds, isGlobal: shopIds.length === 0 };
+  });
+}
+
+export async function getItemShopIds(itemId) {
+  const rows = await all('SELECT shop_id AS shopId FROM item_shops WHERE item_id = ?', [itemId]);
+  return rows.map((r) => r.shopId);
+}
+
+export async function setItemShops(itemId, shopIds) {
+  const item = await get('SELECT id FROM items WHERE id = ?', [itemId]);
+  if (!item) throw new Error('item not found');
+  const ids = Array.isArray(shopIds) ? [...new Set(shopIds.map(Number).filter(Number.isInteger))] : [];
+  await run('DELETE FROM item_shops WHERE item_id = ?', [itemId]);
+  for (const shopId of ids) {
+    await run('INSERT INTO item_shops (item_id, shop_id) VALUES (?, ?)', [itemId, shopId]);
+  }
+  return { itemId, shopIds: ids };
 }
 
 export async function createItem(name, defaultPrice, category) {

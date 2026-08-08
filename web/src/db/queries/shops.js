@@ -8,10 +8,14 @@ async function getShopById(id) {
 
 export async function outstandingDebtOf(shopId) {
   const row = await get(
-    `SELECT COALESCE(SUM(be.unit_price * be.quantity), 0) AS outstandingDebt
-     FROM bills b JOIN bill_entries be ON be.bill_id = b.id
-     WHERE b.shop_id = ? AND b.status = 'cleared' AND b.payment_id IS NULL`,
-    [shopId]
+    `SELECT
+       COALESCE((SELECT SUM(be.unit_price * be.quantity)
+                 FROM bills b JOIN bill_entries be ON be.bill_id = b.id
+                 WHERE b.shop_id = ? AND b.status = 'cleared' AND b.payment_id IS NULL), 0)
+       - COALESCE((SELECT SUM(p.amount) FROM payments p
+                   WHERE p.shop_id = ? AND NOT EXISTS (SELECT 1 FROM bills WHERE payment_id = p.id)), 0)
+       AS outstandingDebt`,
+    [shopId, shopId]
   );
   return row.outstandingDebt;
 }
@@ -32,7 +36,7 @@ export async function getShops() {
       FROM events
     )
     SELECT s.id, s.name, s.phone, s.note,
-      COALESCE(debt.total, 0) AS outstandingDebt,
+      COALESCE(debt.total, 0) - COALESCE(freepay.total, 0) AS outstandingDebt,
       r.kind AS lastActivityKind, r.occurred_at AS lastActivityAt,
       r.amount AS lastActivityAmount, r.entry_count AS lastActivityEntryCount
     FROM shops s
@@ -43,6 +47,12 @@ export async function getShops() {
       WHERE b.status = 'cleared' AND b.payment_id IS NULL
       GROUP BY b.shop_id
     ) debt ON debt.shop_id = s.id
+    LEFT JOIN (
+      SELECT p.shop_id, SUM(p.amount) AS total
+      FROM payments p
+      WHERE NOT EXISTS (SELECT 1 FROM bills WHERE payment_id = p.id)
+      GROUP BY p.shop_id
+    ) freepay ON freepay.shop_id = s.id
     ORDER BY s.name`
   );
 }
@@ -86,8 +96,10 @@ export async function getShopPrices(shopId) {
             ), 0) AS timesUsed
      FROM items i
      LEFT JOIN shop_item_prices sip ON sip.item_id = i.id AND sip.shop_id = ?
+     WHERE NOT EXISTS (SELECT 1 FROM item_shops WHERE item_id = i.id)
+        OR EXISTS (SELECT 1 FROM item_shops WHERE item_id = i.id AND shop_id = ?)
      ORDER BY i.name`,
-    [shopId, shopId]
+    [shopId, shopId, shopId]
   );
   return rows.map((r) => ({
     id: r.id,

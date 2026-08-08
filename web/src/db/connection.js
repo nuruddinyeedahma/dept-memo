@@ -67,7 +67,10 @@ export async function exec(sql) {
   await persist(sqlDb);
 }
 
-const TABLES = ['shops', 'items', 'shop_item_prices', 'bills', 'bill_entries', 'payments'];
+const TABLES = ['shops', 'items', 'item_shops', 'shop_item_prices', 'bills', 'bill_entries', 'payments'];
+
+// Insert order must respect foreign keys (parents before children); delete order is the reverse.
+const TABLE_ORDER = ['shops', 'items', 'item_shops', 'shop_item_prices', 'payments', 'bills', 'bill_entries'];
 
 export async function exportBackupJson() {
   const sqlDb = await getDb();
@@ -76,4 +79,30 @@ export async function exportBackupJson() {
     tables[table] = execToObjects(sqlDb, `SELECT * FROM ${table}`);
   }
   return { format: 'debt-tracker-backup', version: 1, exportedAt: new Date().toISOString(), tables };
+}
+
+export async function importBackupJson(backup) {
+  if (!backup || backup.format !== 'debt-tracker-backup' || typeof backup.tables !== 'object') {
+    throw new Error('ไฟล์นี้ไม่ใช่ไฟล์สำรองข้อมูลที่ถูกต้อง');
+  }
+  const sqlDb = await getDb();
+  sqlDb.run('BEGIN TRANSACTION');
+  try {
+    for (const table of [...TABLE_ORDER].reverse()) {
+      sqlDb.run(`DELETE FROM ${table}`);
+    }
+    for (const table of TABLE_ORDER) {
+      for (const row of backup.tables[table] ?? []) {
+        const cols = Object.keys(row);
+        if (cols.length === 0) continue;
+        const placeholders = cols.map(() => '?').join(',');
+        sqlDb.run(`INSERT INTO ${table} (${cols.join(',')}) VALUES (${placeholders})`, cols.map((c) => row[c]));
+      }
+    }
+    sqlDb.run('COMMIT');
+  } catch (err) {
+    sqlDb.run('ROLLBACK');
+    throw err;
+  }
+  await persist(sqlDb);
 }

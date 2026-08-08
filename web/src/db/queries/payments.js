@@ -33,6 +33,27 @@ export async function createPayment(shopId, billIds, note) {
   return { payment, outstandingDebt: await outstandingDebtOf(shop.id) };
 }
 
+// A direct payment is a plain payments row with no bills linked to it. outstandingDebtOf
+// (and the shop-list/summary queries) subtract any such unlinked payments from the bill
+// total, so this reduces debt immediately without requiring an itemized bill.
+export async function createDirectPayment(shopId, amount, note) {
+  const shop = await getShopById(shopId);
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('amount must be a positive number');
+  const noteValue = note ? String(note).trim() || null : null;
+
+  const { lastInsertRowid: paymentId } = await run('INSERT INTO payments (shop_id, amount, note) VALUES (?, ?, ?)', [
+    shop.id,
+    value,
+    noteValue,
+  ]);
+
+  const payment = await get('SELECT id, shop_id AS shopId, amount, paid_at AS paidAt, note FROM payments WHERE id = ?', [
+    paymentId,
+  ]);
+  return { payment, outstandingDebt: await outstandingDebtOf(shop.id) };
+}
+
 export async function deletePayment(shopId, paymentId) {
   const shop = await getShopById(shopId);
   const payment = await get('SELECT * FROM payments WHERE id = ? AND shop_id = ?', [paymentId, shop.id]);
