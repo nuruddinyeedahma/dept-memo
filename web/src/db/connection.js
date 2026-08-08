@@ -20,7 +20,7 @@ async function persist(sqlDb) {
 }
 
 async function openDb() {
-  const SQL = await initSqlJs({ locateFile: () => '/assets/sql-wasm.wasm' });
+  const SQL = await initSqlJs({ locateFile: () => `${import.meta.env.BASE_URL}assets/sql-wasm.wasm` });
   const saved = await idbGet(IDB_KEY);
   const sqlDb = saved ? new SQL.Database(saved) : new SQL.Database();
   sqlDb.run(SCHEMA_SQL);
