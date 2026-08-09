@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { formatMoney, formatDateTimeThai } from '../lib/format.js';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
+  useLockBodyScroll();
   const [bills, setBills] = useState(null);
   const [payments, setPayments] = useState([]);
   const [selected, setSelected] = useState(new Set());

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { exportBackupJson, importBackupJson } from '../db/connection.js';
 import BottomNav from '../components/BottomNav.jsx';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 function timestamp() {
   const d = new Date();
@@ -32,6 +33,7 @@ export default function SettingsPage() {
   const [importBusy, setImportBusy] = useState(false);
   const [pendingImport, setPendingImport] = useState(null);
   const fileInputRef = useRef(null);
+  useLockBodyScroll(!!pendingImport);
 
   async function handleBackup() {
     setBusy(true);

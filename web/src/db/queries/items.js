@@ -1,7 +1,9 @@
 import { all, get, run } from '../connection.js';
 
 export async function getItems() {
-  const items = await all('SELECT id, name, default_price AS defaultPrice, category FROM items ORDER BY name');
+  const items = await all(
+    'SELECT id, name, default_price AS defaultPrice, category, active FROM items ORDER BY name'
+  );
   const links = await all('SELECT item_id AS itemId, shop_id AS shopId FROM item_shops');
   const byItem = new Map();
   for (const l of links) {
@@ -10,7 +12,7 @@ export async function getItems() {
   }
   return items.map((item) => {
     const shopIds = byItem.get(item.id) ?? [];
-    return { ...item, shopIds, isGlobal: shopIds.length === 0 };
+    return { ...item, active: !!item.active, shopIds, isGlobal: shopIds.length === 0 };
   });
 }
 
@@ -45,7 +47,9 @@ export async function createItem(name, defaultPrice, category) {
     'INSERT INTO items (name, default_price, category) VALUES (?, ?, ?)',
     [name.trim(), price, categoryValue]
   );
-  return get('SELECT id, name, default_price AS defaultPrice, category FROM items WHERE id = ?', [lastInsertRowid]);
+  return get('SELECT id, name, default_price AS defaultPrice, category, active FROM items WHERE id = ?', [
+    lastInsertRowid,
+  ]);
 }
 
 export async function updateItem(id, patch) {
@@ -55,11 +59,31 @@ export async function updateItem(id, patch) {
   const name = patch.name !== undefined ? String(patch.name).trim() : existing.name;
   const price = patch.default_price !== undefined ? Number(patch.default_price) : existing.default_price;
   const category = patch.category !== undefined ? String(patch.category).trim() || null : existing.category;
+  const active = patch.active !== undefined ? (patch.active ? 1 : 0) : existing.active;
   if (!name) throw new Error('name cannot be empty');
   if (!Number.isFinite(price) || price < 0) {
     throw new Error('default_price must be a non-negative number');
   }
 
-  await run('UPDATE items SET name = ?, default_price = ?, category = ? WHERE id = ?', [name, price, category, id]);
-  return get('SELECT id, name, default_price AS defaultPrice, category FROM items WHERE id = ?', [id]);
+  await run('UPDATE items SET name = ?, default_price = ?, category = ?, active = ? WHERE id = ?', [
+    name,
+    price,
+    category,
+    active,
+    id,
+  ]);
+  return get('SELECT id, name, default_price AS defaultPrice, category, active FROM items WHERE id = ?', [id]);
+}
+
+export async function deleteItem(id) {
+  const existing = await get('SELECT id FROM items WHERE id = ?', [id]);
+  if (!existing) throw new Error('item not found');
+  // Explicit cleanup instead of relying on ON DELETE CASCADE/SET NULL, which doesn't
+  // reliably fire under sql.js's WASM sqlite build (see payments.js deletePayment).
+  // bill_entries already snapshot item_name/unit_price at insert time, so past bills
+  // are unaffected once item_id is cleared.
+  await run('UPDATE bill_entries SET item_id = NULL WHERE item_id = ?', [id]);
+  await run('DELETE FROM shop_item_prices WHERE item_id = ?', [id]);
+  await run('DELETE FROM item_shops WHERE item_id = ?', [id]);
+  await run('DELETE FROM items WHERE id = ?', [id]);
 }

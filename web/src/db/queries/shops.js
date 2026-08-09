@@ -96,8 +96,9 @@ export async function getShopPrices(shopId) {
             ), 0) AS timesUsed
      FROM items i
      LEFT JOIN shop_item_prices sip ON sip.item_id = i.id AND sip.shop_id = ?
-     WHERE NOT EXISTS (SELECT 1 FROM item_shops WHERE item_id = i.id)
-        OR EXISTS (SELECT 1 FROM item_shops WHERE item_id = i.id AND shop_id = ?)
+     WHERE i.active = 1
+       AND (NOT EXISTS (SELECT 1 FROM item_shops WHERE item_id = i.id)
+            OR EXISTS (SELECT 1 FROM item_shops WHERE item_id = i.id AND shop_id = ?))
      ORDER BY i.name`,
     [shopId, shopId, shopId]
   );

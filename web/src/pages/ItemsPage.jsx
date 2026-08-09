@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import BottomNav from '../components/BottomNav.jsx';
 import ItemSheet from '../components/ItemSheet.jsx';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function ItemsPage() {
   const [items, setItems] = useState([]);
@@ -12,6 +13,7 @@ export default function ItemsPage() {
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  useLockBodyScroll(showAdd);
 
   async function load() {
     setLoading(true);
@@ -32,6 +34,7 @@ export default function ItemsPage() {
     () => items.filter((i) => i.name.toLowerCase().includes(search.trim().toLowerCase())),
     [items, search]
   );
+  const categories = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))], [items]);
 
   function shopLabel(item) {
     if (item.isGlobal) return 'ทุกร้าน';
@@ -83,13 +86,18 @@ export default function ItemsPage() {
         ) : (
           <div className="price-panel">
             {visible.map((item) => (
-              <button key={item.id} className="price-row item-manage-row" onClick={() => setEditItem(item)}>
+              <button
+                key={item.id}
+                className={`price-row item-manage-row ${item.active ? '' : 'inactive'}`}
+                onClick={() => setEditItem(item)}
+              >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="price-row-name">{item.name}</div>
                   <div className="price-row-default tabular">
                     ราคากลาง {item.defaultPrice} บาท{item.category ? ` · ${item.category}` : ''}
                   </div>
                 </div>
+                {!item.active && <span className="override-badge inactive-badge">ปิดใช้งาน</span>}
                 <span className={`override-badge ${item.isGlobal ? '' : 'scoped'}`}>{shopLabel(item)}</span>
               </button>
             ))}
@@ -108,8 +116,13 @@ export default function ItemsPage() {
         <ItemSheet
           item={editItem}
           shops={shops}
+          categories={categories}
           onClose={() => setEditItem(null)}
           onSaved={() => {
+            setEditItem(null);
+            load();
+          }}
+          onDeleted={() => {
             setEditItem(null);
             load();
           }}
@@ -136,10 +149,16 @@ export default function ItemsPage() {
               />
               <input
                 className="field-input"
+                list="item-category-options-new"
                 placeholder="หมวดหมู่ (ไม่บังคับ)"
                 value={newItem.category}
                 onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
               />
+              <datalist id="item-category-options-new">
+                {categories.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
               {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline-gold" onClick={() => setShowAdd(false)}>

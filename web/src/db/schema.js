@@ -14,6 +14,7 @@ export const SCHEMA_SQL = `
     name TEXT NOT NULL UNIQUE,
     default_price REAL NOT NULL,
     category TEXT,
+    active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 

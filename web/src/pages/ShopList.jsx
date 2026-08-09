@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { formatMoney, formatRelativeThai } from '../lib/format.js';
 import BottomNav from '../components/BottomNav.jsx';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 const SORTS = [
   { key: 'debt', label: 'ค้างมากสุด' },
@@ -32,6 +33,7 @@ export default function ShopList() {
   const [newName, setNewName] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  useLockBodyScroll(showModal);
 
   async function load() {
     setLoading(true);

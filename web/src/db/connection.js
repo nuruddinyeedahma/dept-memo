@@ -14,6 +14,16 @@ function execToObjects(sqlDb, sql, params = []) {
   return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])));
 }
 
+// CREATE TABLE IF NOT EXISTS in SCHEMA_SQL only handles brand-new tables; existing
+// databases (persisted in IndexedDB from before a column was added) need an explicit
+// ALTER TABLE to catch up.
+function migrate(sqlDb) {
+  const cols = execToObjects(sqlDb, 'PRAGMA table_info(items)').map((r) => r.name);
+  if (!cols.includes('active')) {
+    sqlDb.run('ALTER TABLE items ADD COLUMN active INTEGER NOT NULL DEFAULT 1');
+  }
+}
+
 async function persist(sqlDb) {
   const bytes = sqlDb.export();
   await idbSet(IDB_KEY, bytes);
@@ -24,6 +34,7 @@ async function openDb() {
   const saved = await idbGet(IDB_KEY);
   const sqlDb = saved ? new SQL.Database(saved) : new SQL.Database();
   sqlDb.run(SCHEMA_SQL);
+  migrate(sqlDb);
 
   await seedIfEmpty({
     get: async (sql, params) => execToObjects(sqlDb, sql, params)[0],

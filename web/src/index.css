@@ -258,6 +258,34 @@ a:hover {
   border-color: var(--dark);
 }
 
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.sort-label {
+  font-size: 12px;
+  color: var(--muted-faint);
+}
+.sort-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--dashed-border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sort-btn.active {
+  background: var(--gold-badge-bg);
+  color: var(--gold-badge-text);
+  border-color: var(--gold-badge-bg);
+  font-weight: 600;
+}
+
 /* ---------- Shop list ---------- */
 .section-pad {
   padding: 16px 20px;
@@ -754,6 +782,22 @@ a:hover {
   font-family: inherit;
   flex-shrink: 0;
 }
+.btn-clear-text {
+  background: none;
+  border: 1px solid var(--debt-red);
+  color: var(--debt-red);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.btn-clear-text:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
 
 /* ---------- Bottom sheet / modal ---------- */
 .sheet-backdrop {
@@ -997,6 +1041,28 @@ a:hover {
 }
 .item-manage-row:last-child {
   border-bottom: none;
+}
+.item-manage-row.inactive {
+  opacity: .55;
+}
+.inactive-badge {
+  background: #EFE6D4;
+  color: var(--muted);
+}
+
+.active-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.active-toggle-row input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--paid-green);
 }
 
 .shop-check-list {

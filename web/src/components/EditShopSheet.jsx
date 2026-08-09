@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { api } from '../api.js';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function EditShopSheet({ shop, onClose, onSaved, onDeleted }) {
+  useLockBodyScroll();
   const [name, setName] = useState(shop.name);
   const [phone, setPhone] = useState(shop.phone ?? '');
   const [note, setNote] = useState(shop.note ?? '');

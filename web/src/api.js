@@ -15,6 +15,7 @@ export const api = {
   getItems: () => items.getItems(),
   createItem: (name, defaultPrice, category) => items.createItem(name, defaultPrice, category),
   updateItem: (id, patch) => items.updateItem(id, patch),
+  deleteItem: (id) => items.deleteItem(id),
   getItemShopIds: (itemId) => items.getItemShopIds(itemId),
   setItemShops: (itemId, shopIds) => items.setItemShops(itemId, shopIds),
 

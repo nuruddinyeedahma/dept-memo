@@ -25,6 +25,7 @@ export default function PricesTab({ shopId }) {
     () => prices.filter((p) => p.name.toLowerCase().includes(search.trim().toLowerCase())),
     [prices, search]
   );
+  const categories = useMemo(() => [...new Set(prices.map((p) => p.category).filter(Boolean))], [prices]);
 
   async function saveOverride(itemId) {
     const raw = drafts[itemId];
@@ -105,10 +106,16 @@ export default function PricesTab({ shopId }) {
           />
           <input
             name="category"
+            list="item-category-options-prices"
             placeholder="หมวดหมู่ (ไม่บังคับ)"
             value={newItem.category}
             onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
           />
+          <datalist id="item-category-options-prices">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
         </form>
         {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
         <button type="button" className="btn btn-dark" onClick={handleAddItem}>

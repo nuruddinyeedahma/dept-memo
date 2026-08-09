@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { api } from '../api.js';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
-export default function ItemSheet({ item, shops, onClose, onSaved }) {
+export default function ItemSheet({ item, shops, categories, onClose, onSaved, onDeleted }) {
+  useLockBodyScroll();
   const [name, setName] = useState(item.name);
   const [price, setPrice] = useState(String(item.defaultPrice));
   const [category, setCategory] = useState(item.category ?? '');
+  const [active, setActive] = useState(item.active);
   const [isGlobal, setIsGlobal] = useState(item.isGlobal);
   const [selected, setSelected] = useState(new Set(item.shopIds));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   function toggleShop(id) {
     setIsGlobal(false);
@@ -28,13 +32,25 @@ export default function ItemSheet({ item, shops, onClose, onSaved }) {
       if (!name.trim() || !Number.isFinite(priceValue) || priceValue < 0) {
         throw new Error('กรอกชื่อและราคาที่ถูกต้อง');
       }
-      await api.updateItem(item.id, { name: name.trim(), default_price: priceValue, category: category.trim() });
+      await api.updateItem(item.id, { name: name.trim(), default_price: priceValue, category: category.trim(), active });
       await api.setItemShops(item.id, isGlobal ? [] : [...selected]);
       onSaved?.();
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function confirmDelete() {
+    setBusy(true);
+    try {
+      await api.deleteItem(item.id);
+      onDeleted?.();
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+      setShowConfirmDelete(false);
     }
   }
 
@@ -54,8 +70,28 @@ export default function ItemSheet({ item, shops, onClose, onSaved }) {
         </div>
         <div className="field-group">
           <div className="field-label">หมวดหมู่ (ไม่บังคับ)</div>
-          <input className="field-input" value={category} onChange={(e) => setCategory(e.target.value)} />
+          <input
+            className="field-input"
+            list="item-category-options"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+          <datalist id="item-category-options">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
         </div>
+
+        <label className="active-toggle-row">
+          <span>เปิดใช้งานสินค้านี้</span>
+          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+        </label>
+        {!active && (
+          <div className="hint-text" style={{ textAlign: 'left' }}>
+            สินค้าที่ปิดใช้งานจะไม่แสดงในหน้าบันทึกหนี้และหน้าราคาของร้านค้า
+          </div>
+        )}
 
         <div className="field-group">
           <div className="field-label">ผูกกับร้าน</div>
@@ -92,7 +128,35 @@ export default function ItemSheet({ item, shops, onClose, onSaved }) {
             บันทึก
           </button>
         </div>
+
+        <button
+          className="btn-danger-text"
+          style={{ textAlign: 'center', borderTop: '1px solid #E6DAC3', paddingTop: 14 }}
+          disabled={busy}
+          onClick={() => setShowConfirmDelete(true)}
+        >
+          ลบสินค้านี้
+        </button>
       </div>
+
+      {showConfirmDelete && (
+        <div className="modal-backdrop" onClick={(e) => { e.stopPropagation(); setShowConfirmDelete(false); }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="serif">ลบสินค้า "{item.name}"?</h2>
+            <p style={{ fontSize: 14, color: 'var(--muted)' }}>
+              บิลเก่าที่เคยลงสินค้านี้ไปแล้วจะไม่หายไป แต่จะไม่สามารถเลือกสินค้านี้ในรายการใหม่ได้อีก
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-outline-gold" disabled={busy} onClick={() => setShowConfirmDelete(false)}>
+                ยกเลิก
+              </button>
+              <button className="btn btn-dark" style={{ background: 'var(--debt-red)' }} disabled={busy} onClick={confirmDelete}>
+                ลบสินค้านี้
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

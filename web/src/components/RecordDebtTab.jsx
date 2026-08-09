@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { formatMoney } from '../lib/format.js';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function RecordDebtTab({ shopId }) {
   const [prices, setPrices] = useState([]);
   const [bill, setBill] = useState(null);
   const [busy, setBusy] = useState(false);
   const [activeChip, setActiveChip] = useState('frequent');
+  const [sortBy, setSortBy] = useState('name');
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  useLockBodyScroll(showAddItem);
 
   async function loadAll() {
     const [priceList, openBill] = await Promise.all([api.getShopPrices(shopId), api.getOpenBill(shopId)]);
@@ -44,9 +47,12 @@ export default function RecordDebtTab({ shopId }) {
     if (activeChip === 'frequent') {
       return [...prices].filter((p) => p.timesUsed > 0).sort((a, b) => b.timesUsed - a.timesUsed);
     }
-    if (activeChip === 'all') return prices;
-    return prices.filter((p) => p.category === activeChip);
-  }, [prices, activeChip]);
+    const list = activeChip === 'all' ? [...prices] : prices.filter((p) => p.category === activeChip);
+    if (sortBy === 'price') {
+      return list.sort((a, b) => a.effectivePrice - b.effectivePrice);
+    }
+    return list.sort((a, b) => a.name.localeCompare(b.name, 'th'));
+  }, [prices, activeChip, sortBy]);
 
   async function changeQty(itemId, delta) {
     setBusy(true);
@@ -83,6 +89,9 @@ export default function RecordDebtTab({ shopId }) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div className="section-pad" style={{ paddingBottom: 0 }}>
         <div className="chip-row">
+          <button className={`chip ${activeChip === 'all' ? 'active' : ''}`} onClick={() => setActiveChip('all')}>
+            ทั้งหมด
+          </button>
           {hasFrequent && (
             <button className={`chip ${activeChip === 'frequent' ? 'active' : ''}`} onClick={() => setActiveChip('frequent')}>
               ใช้บ่อย
@@ -93,10 +102,18 @@ export default function RecordDebtTab({ shopId }) {
               {c}
             </button>
           ))}
-          <button className={`chip ${activeChip === 'all' ? 'active' : ''}`} onClick={() => setActiveChip('all')}>
-            ทั้งหมด
-          </button>
         </div>
+        {activeChip !== 'frequent' && (
+          <div className="sort-row">
+            <span className="sort-label">เรียงตาม</span>
+            <button className={`sort-btn ${sortBy === 'name' ? 'active' : ''}`} onClick={() => setSortBy('name')}>
+              ชื่อ ก-ฮ
+            </button>
+            <button className={`sort-btn ${sortBy === 'price' ? 'active' : ''}`} onClick={() => setSortBy('price')}>
+              ราคา
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="section-pad" style={{ paddingTop: 12 }}>
@@ -169,10 +186,16 @@ export default function RecordDebtTab({ shopId }) {
               />
               <input
                 className="field-input"
+                list="item-category-options-record"
                 placeholder="หมวดหมู่ (ไม่บังคับ)"
                 value={newItem.category}
                 onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
               />
+              <datalist id="item-category-options-record">
+                {categories.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
               {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline-gold" onClick={() => setShowAddItem(false)}>

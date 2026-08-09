@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { formatMoney } from '../lib/format.js';
 import PaymentSheet from '../components/PaymentSheet.jsx';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function CurrentBillPage() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function CurrentBillPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [confirmClearCart, setConfirmClearCart] = useState(false);
   const navigate = useNavigate();
+  useLockBodyScroll(confirmClearCart);
 
   async function load() {
     const [shops, openBill] = await Promise.all([api.getShops(), api.getOpenBill(shopId)]);
@@ -77,12 +79,11 @@ export default function CurrentBillPage() {
           บิลปัจจุบัน · {shop.name}
         </div>
         <button
-          className="btn-danger-text"
-          style={{ fontSize: 13 }}
+          className="btn-clear-text"
           disabled={busy || bill.entries.length === 0}
           onClick={() => setConfirmClearCart(true)}
         >
-          ล้างบิล
+          ✕ ล้างบิล
         </button>
       </div>
 
@@ -161,7 +162,9 @@ export default function CurrentBillPage() {
         <div className="modal-backdrop" onClick={() => setConfirmClearCart(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2 className="serif">ล้างบิลนี้?</h2>
-            <p style={{ fontSize: 14, color: 'var(--muted)' }}>รายการทั้งหมดในบิลปัจจุบันจะถูกลบ</p>
+            <p style={{ fontSize: 14, color: 'var(--muted)' }}>
+              {bill.entries.length} รายการ รวม {formatMoney(bill.total)} บาท จะถูกลบออกจากบิลปัจจุบัน
+            </p>
             <div className="modal-actions">
               <button className="btn btn-outline-gold" disabled={busy} onClick={() => setConfirmClearCart(false)}>
                 ยกเลิก
