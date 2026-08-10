@@ -106,17 +106,25 @@ export default function PricesTab({ shopId }) {
           />
           <input
             name="category"
-            list="item-category-options-prices"
             placeholder="หมวดหมู่ (ไม่บังคับ)"
             value={newItem.category}
             onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
           />
-          <datalist id="item-category-options-prices">
-            {categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
         </form>
+        {categories.length > 0 && (
+          <div className="chip-row">
+            {categories.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`chip ${newItem.category === c ? 'active' : ''}`}
+                onClick={() => setNewItem({ ...newItem, category: c })}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
         {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
         <button type="button" className="btn btn-dark" onClick={handleAddItem}>
           เพิ่มสินค้า

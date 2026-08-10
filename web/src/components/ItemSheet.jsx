@@ -70,17 +70,21 @@ export default function ItemSheet({ item, shops, categories, onClose, onSaved, o
         </div>
         <div className="field-group">
           <div className="field-label">หมวดหมู่ (ไม่บังคับ)</div>
-          <input
-            className="field-input"
-            list="item-category-options"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          />
-          <datalist id="item-category-options">
-            {categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
+          <input className="field-input" value={category} onChange={(e) => setCategory(e.target.value)} />
+          {categories.length > 0 && (
+            <div className="chip-row">
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`chip ${category === c ? 'active' : ''}`}
+                  onClick={() => setCategory(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <label className="active-toggle-row">

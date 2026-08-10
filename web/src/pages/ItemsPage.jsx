@@ -149,16 +149,24 @@ export default function ItemsPage() {
               />
               <input
                 className="field-input"
-                list="item-category-options-new"
                 placeholder="หมวดหมู่ (ไม่บังคับ)"
                 value={newItem.category}
                 onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
               />
-              <datalist id="item-category-options-new">
-                {categories.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
+              {categories.length > 0 && (
+                <div className="chip-row">
+                  {categories.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`chip ${newItem.category === c ? 'active' : ''}`}
+                      onClick={() => setNewItem({ ...newItem, category: c })}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
               {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline-gold" onClick={() => setShowAdd(false)}>
