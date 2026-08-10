@@ -32,8 +32,25 @@ export default function SettingsPage() {
   const [importError, setImportError] = useState('');
   const [importBusy, setImportBusy] = useState(false);
   const [pendingImport, setPendingImport] = useState(null);
+  const [refreshBusy, setRefreshBusy] = useState(false);
   const fileInputRef = useRef(null);
   useLockBodyScroll(!!pendingImport);
+
+  async function handleRefresh() {
+    setRefreshBusy(true);
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) await r.unregister();
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const k of keys) await caches.delete(k);
+      }
+    } finally {
+      window.location.reload();
+    }
+  }
 
   async function handleBackup() {
     setBusy(true);
@@ -119,6 +136,17 @@ export default function SettingsPage() {
           />
           <button className="btn btn-outline-gold" onClick={() => fileInputRef.current?.click()}>
             เลือกไฟล์สำรองข้อมูล
+          </button>
+        </div>
+
+        <div className="add-item-card">
+          <div className="add-item-card-title">รีเฟรชแอป</div>
+          <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>
+            ถ้าแอปแสดงข้อมูลเก่าหรือค้าง กดปุ่มนี้เพื่อล้างแคชแล้วโหลดเวอร์ชันล่าสุด
+            ข้อมูลร้านค้าและประวัติหนี้ที่บันทึกไว้จะไม่หายไป
+          </p>
+          <button className="btn btn-outline-gold" disabled={refreshBusy} onClick={handleRefresh}>
+            {refreshBusy ? 'กำลังรีเฟรช...' : 'รีเฟรชแอป'}
           </button>
         </div>
       </div>

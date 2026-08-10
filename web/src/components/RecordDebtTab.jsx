@@ -150,6 +150,7 @@ export default function RecordDebtTab({ shopId }) {
           </button>
         </div>
         <div className="hint-text" style={{ marginTop: 10 }}>กดปุ่ม −/+ เพื่อปรับจำนวนได้เลย</div>
+        {bill.entries.length > 0 && <div style={{ height: 84 }} />}
       </div>
 
       {bill.entries.length > 0 && (
