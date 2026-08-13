@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import BottomNav from '../components/BottomNav.jsx';
 import ItemSheet from '../components/ItemSheet.jsx';
+import ShopItemsBulkSheet from '../components/ShopItemsBulkSheet.jsx';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function ItemsPage() {
@@ -13,7 +14,9 @@ export default function ItemsPage() {
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  useLockBodyScroll(showAdd);
+  const [bulkShop, setBulkShop] = useState(null);
+  const [showShopPicker, setShowShopPicker] = useState(false);
+  useLockBodyScroll(showAdd || showShopPicker);
 
   async function load() {
     setLoading(true);
@@ -107,6 +110,9 @@ export default function ItemsPage() {
         <button className="btn btn-outline-gold" onClick={() => setShowAdd(true)}>
           + เพิ่มสินค้าใหม่
         </button>
+        <button className="btn btn-outline-gold" onClick={() => setShowShopPicker(true)}>
+          เลือกสินค้ารายร้านแบบ bulk
+        </button>
       </div>
 
       <div style={{ flex: 1 }} />
@@ -124,6 +130,48 @@ export default function ItemsPage() {
           }}
           onDeleted={() => {
             setEditItem(null);
+            load();
+          }}
+        />
+      )}
+
+      {showShopPicker && (
+        <div className="modal-backdrop" onClick={() => setShowShopPicker(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="serif">เลือกร้าน</h2>
+            <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>เลือกร้านที่จะจัดการสินค้าแบบ bulk</p>
+            <div className="pay-list" style={{ maxHeight: '50vh' }}>
+              {shops.map((shop) => (
+                <button
+                  key={shop.id}
+                  className="pay-row item-manage-row"
+                  onClick={() => {
+                    setBulkShop(shop);
+                    setShowShopPicker(false);
+                  }}
+                >
+                  <div className="pay-row-info">
+                    <div className="pay-row-date">{shop.name}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-outline-gold" onClick={() => setShowShopPicker(false)}>
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {bulkShop && (
+        <ShopItemsBulkSheet
+          shopId={bulkShop.id}
+          shopName={bulkShop.name}
+          onClose={() => setBulkShop(null)}
+          onSaved={() => {
+            setBulkShop(null);
             load();
           }}
         />

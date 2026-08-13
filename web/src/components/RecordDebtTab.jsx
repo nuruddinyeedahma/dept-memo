@@ -74,7 +74,8 @@ export default function RecordDebtTab({ shopId }) {
       return;
     }
     try {
-      await api.createItem(name, price, newItem.category.trim() || undefined);
+      const created = await api.createItem(name, price, newItem.category.trim() || undefined);
+      await api.setItemShops(created.id, [shopId]);
       setNewItem({ name: '', price: '', category: '' });
       setShowAddItem(false);
       loadAll();

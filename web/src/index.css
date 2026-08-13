@@ -57,6 +57,14 @@ a:hover {
   position: relative;
 }
 
+/* Phone in landscape (short viewport + touch pointer, to exclude a resized desktop
+   window) - drop the mobile-app width cap so it uses the full screen. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .app {
+    max-width: 100%;
+  }
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
 }
@@ -179,6 +187,12 @@ a:hover {
 
 .stat-item .stat-value.positive {
   color: var(--paid-green-bg);
+}
+
+.pending-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted-faint);
 }
 
 .back-row {
@@ -335,6 +349,12 @@ a:hover {
 .shop-row-sub {
   font-size: 12px;
   color: var(--muted-soft);
+  margin-top: 2px;
+}
+
+.shop-row-pending {
+  font-size: 11px;
+  color: var(--gold-tint);
   margin-top: 2px;
 }
 

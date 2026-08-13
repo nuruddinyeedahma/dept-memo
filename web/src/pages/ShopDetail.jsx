@@ -86,7 +86,7 @@ export default function ShopDetail() {
       </div>
 
       {tab === 'record' && <RecordDebtTab shopId={shopId} />}
-      {tab === 'prices' && <PricesTab shopId={shopId} />}
+      {tab === 'prices' && <PricesTab shopId={shopId} shopName={shop.name} />}
       {tab === 'history' && <HistoryTab shopId={shopId} />}
 
       {showEdit && (

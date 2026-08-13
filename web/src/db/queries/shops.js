@@ -37,6 +37,7 @@ export async function getShops() {
     )
     SELECT s.id, s.name, s.phone, s.note,
       COALESCE(debt.total, 0) - COALESCE(freepay.total, 0) AS outstandingDebt,
+      COALESCE(pending.total, 0) AS pendingBillTotal,
       r.kind AS lastActivityKind, r.occurred_at AS lastActivityAt,
       r.amount AS lastActivityAmount, r.entry_count AS lastActivityEntryCount
     FROM shops s
@@ -53,6 +54,12 @@ export async function getShops() {
       WHERE NOT EXISTS (SELECT 1 FROM bills WHERE payment_id = p.id)
       GROUP BY p.shop_id
     ) freepay ON freepay.shop_id = s.id
+    LEFT JOIN (
+      SELECT b.shop_id, SUM(be.unit_price * be.quantity) AS total
+      FROM bills b JOIN bill_entries be ON be.bill_id = b.id
+      WHERE b.status = 'open'
+      GROUP BY b.shop_id
+    ) pending ON pending.shop_id = s.id
     ORDER BY s.name`
   );
 }

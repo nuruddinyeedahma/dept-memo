@@ -32,5 +32,11 @@ export async function getSummary() {
      WHERE strftime('%Y-%m', paid_at) = strftime('%Y-%m', 'now')`
   );
 
-  return { totalOutstanding, shopsWithDebt, totalShops, paymentsThisMonth };
+  const { totalPendingBills } = await get(
+    `SELECT COALESCE(SUM(be.unit_price * be.quantity), 0) AS totalPendingBills
+     FROM bills b JOIN bill_entries be ON be.bill_id = b.id
+     WHERE b.status = 'open'`
+  );
+
+  return { totalOutstanding, shopsWithDebt, totalShops, paymentsThisMonth, totalPendingBills };
 }

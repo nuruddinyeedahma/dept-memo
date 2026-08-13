@@ -102,6 +102,11 @@ export default function ShopList() {
             <div className="stat-value tabular positive">+ {summary ? formatMoney(summary.paymentsThisMonth) : '···'}</div>
           </div>
         </div>
+        {summary?.totalPendingBills > 0 && (
+          <div className="pending-hint">
+            มีบิลที่ยังไม่ได้บันทึกลงหนี้ {formatMoney(summary.totalPendingBills)} บาท ในทุกร้านรวมกัน
+          </div>
+        )}
       </div>
 
       <div className="section-pad">
@@ -129,6 +134,9 @@ export default function ShopList() {
                 <div>
                   <div className={`shop-row-name ${shop.outstandingDebt === 0 ? 'settled' : ''}`}>{shop.name}</div>
                   <div className="shop-row-sub">{shopSubtitle(shop)}</div>
+                  {shop.pendingBillTotal > 0 && (
+                    <div className="shop-row-pending">บิลค้างบันทึก {formatMoney(shop.pendingBillTotal)} บาท</div>
+                  )}
                 </div>
                 {shop.outstandingDebt === 0 ? (
                   <div className="shop-row-settled">ไม่มีหนี้ค้าง</div>

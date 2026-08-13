@@ -18,6 +18,7 @@ export const api = {
   deleteItem: (id) => items.deleteItem(id),
   getItemShopIds: (itemId) => items.getItemShopIds(itemId),
   setItemShops: (itemId, shopIds) => items.setItemShops(itemId, shopIds),
+  bulkSetShopItems: (shopId, includedItemIds) => items.bulkSetShopItems(shopId, includedItemIds),
 
   getShopPrices: (shopId) => shops.getShopPrices(shopId),
   setShopPrice: (shopId, itemId, price) => shops.setShopPrice(shopId, itemId, price),

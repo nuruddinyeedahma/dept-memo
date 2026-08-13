@@ -32,6 +32,31 @@ export async function setItemShops(itemId, shopIds) {
   return { itemId, shopIds: ids };
 }
 
+// Reconciles item_shops for every item against a shop-centric checked/unchecked list.
+// A global item (no item_shops rows, visible everywhere) that gets unchecked for this
+// shop is converted to an explicit list of every OTHER shop, since the schema has no
+// way to represent "everywhere except here".
+export async function bulkSetShopItems(shopId, includedItemIds) {
+  const items = await getItems();
+  const shops = await all('SELECT id FROM shops');
+  const allShopIds = shops.map((s) => s.id);
+  const includedSet = new Set((includedItemIds ?? []).map(Number));
+
+  for (const item of items) {
+    const currentlyIncluded = item.isGlobal || item.shopIds.includes(shopId);
+    const shouldInclude = includedSet.has(item.id);
+    if (currentlyIncluded === shouldInclude) continue;
+
+    if (shouldInclude) {
+      await setItemShops(item.id, [...new Set([...item.shopIds, shopId])]);
+    } else if (item.isGlobal) {
+      await setItemShops(item.id, allShopIds.filter((id) => id !== shopId));
+    } else {
+      await setItemShops(item.id, item.shopIds.filter((id) => id !== shopId));
+    }
+  }
+}
+
 export async function createItem(name, defaultPrice, category) {
   if (!name || typeof name !== 'string' || !name.trim()) {
     throw new Error('name is required');
