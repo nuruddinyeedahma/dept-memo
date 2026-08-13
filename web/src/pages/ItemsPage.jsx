@@ -111,7 +111,7 @@ export default function ItemsPage() {
           + เพิ่มสินค้าใหม่
         </button>
         <button className="btn btn-outline-gold" onClick={() => setShowShopPicker(true)}>
-          เลือกสินค้ารายร้านแบบ bulk
+          เลือกสินค้าหลายรายการ
         </button>
       </div>
 
@@ -139,7 +139,7 @@ export default function ItemsPage() {
         <div className="modal-backdrop" onClick={() => setShowShopPicker(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2 className="serif">เลือกร้าน</h2>
-            <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>เลือกร้านที่จะจัดการสินค้าแบบ bulk</p>
+            <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>เลือกร้านที่ต้องการจัดการสินค้า</p>
             <div className="pay-list" style={{ maxHeight: '50vh' }}>
               {shops.map((shop) => (
                 <button

@@ -71,7 +71,7 @@ export default function PricesTab({ shopId, shopName }) {
       </div>
 
       <button type="button" className="btn btn-outline-gold" onClick={() => setShowBulkPicker(true)}>
-        เลือกสินค้าสำหรับร้านนี้แบบ bulk
+        เลือกสินค้าหลายรายการ
       </button>
 
       <div className="price-panel">

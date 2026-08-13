@@ -62,6 +62,8 @@ a:hover {
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   .app {
     max-width: 100%;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
   }
 }
 
@@ -405,6 +407,13 @@ a:hover {
   }
 }
 
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .fab {
+    right: 20px;
+    transform: none;
+  }
+}
+
 .bottom-nav {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -462,7 +471,7 @@ a:hover {
 /* ---------- Item grid (record debt) ---------- */
 .item-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 10px;
 }
 
@@ -473,7 +482,7 @@ a:hover {
   flex-direction: column;
   gap: 6px;
   justify-content: space-between;
-  min-height: 92px;
+  aspect-ratio: 1;
   position: relative;
   cursor: pointer;
   border: 1px solid var(--cream-border);
@@ -580,7 +589,7 @@ a:hover {
   gap: 6px;
   color: var(--muted-soft);
   cursor: pointer;
-  min-height: 92px;
+  aspect-ratio: 1;
   font-family: inherit;
 }
 
