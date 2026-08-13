@@ -34,6 +34,9 @@ jobs:
         working-directory: web
         run: npm run build -- --base=/${{ github.event.repository.name }}/
 
+      - name: SPA fallback for GitHub Pages routing
+        run: cp web/dist/index.html web/dist/404.html
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
