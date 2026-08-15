@@ -1,11 +1,11 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import 'express-async-errors';
-import { connectDb } from './lib/db.js';
-import authRouter from './routes/auth.js';
-import customerRouter from './routes/customer.js';
-import adminRouter from './routes/admin.js';
-import shopRouter from './routes/shop.js';
+import { connectDb } from '../server/lib/db.js';
+import authRouter from '../server/routes/auth.js';
+import customerRouter from '../server/routes/customer.js';
+import adminRouter from '../server/routes/admin.js';
+import shopRouter from '../server/routes/shop.js';
 
 const app = express();
 

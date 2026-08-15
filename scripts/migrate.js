@@ -3,11 +3,11 @@
 import fs from 'node:fs';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
-import Shop from '../api/models/Shop.js';
-import Item from '../api/models/Item.js';
-import Bill from '../api/models/Bill.js';
-import Payment from '../api/models/Payment.js';
-import User from '../api/models/User.js';
+import Shop from '../server/models/Shop.js';
+import Item from '../server/models/Item.js';
+import Bill from '../server/models/Bill.js';
+import Payment from '../server/models/Payment.js';
+import User from '../server/models/User.js';
 
 const backupPath = process.argv[2];
 if (!backupPath) {
