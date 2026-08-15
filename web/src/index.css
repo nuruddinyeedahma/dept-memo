@@ -415,8 +415,7 @@ a:hover {
 }
 
 .bottom-nav {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
   border-top: 1px solid var(--cream-border);
   background: var(--cream-panel);
   padding: 12px 0 max(12px, env(safe-area-inset-bottom));
@@ -425,6 +424,7 @@ a:hover {
 }
 
 .bottom-nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

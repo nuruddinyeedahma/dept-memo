@@ -1,40 +1,33 @@
-import * as shops from './db/queries/shops.js';
-import * as items from './db/queries/items.js';
-import * as bills from './db/queries/bills.js';
-import * as payments from './db/queries/payments.js';
-import * as summary from './db/queries/summary.js';
+import { http } from './http.js';
+
+const base = '/api/customer';
 
 export const api = {
-  getShops: () => shops.getShops(),
-  createShop: (name) => shops.createShop(name),
-  updateShop: (id, patch) => shops.updateShop(id, patch),
-  deleteShop: (id) => shops.deleteShop(id),
+  getShops: () => http.get(`${base}/shops`),
+  createShop: (name) => http.post(`${base}/shops`, { name }),
+  updateShop: (id, patch) => http.patch(`${base}/shops/${id}`, patch),
+  deleteShop: (id) => http.delete(`${base}/shops/${id}`),
 
-  getSummary: () => summary.getSummary(),
+  getSummary: () => http.get(`${base}/summary`),
 
-  getItems: () => items.getItems(),
-  createItem: (name, defaultPrice, category) => items.createItem(name, defaultPrice, category),
-  updateItem: (id, patch) => items.updateItem(id, patch),
-  deleteItem: (id) => items.deleteItem(id),
-  getItemShopIds: (itemId) => items.getItemShopIds(itemId),
-  setItemShops: (itemId, shopIds) => items.setItemShops(itemId, shopIds),
-  bulkSetShopItems: (shopId, includedItemIds) => items.bulkSetShopItems(shopId, includedItemIds),
+  createItem: (name, defaultPrice, category, shopId) =>
+    http.post(`${base}/items`, { name, defaultPrice, category, shopId }),
 
-  getShopPrices: (shopId) => shops.getShopPrices(shopId),
-  setShopPrice: (shopId, itemId, price) => shops.setShopPrice(shopId, itemId, price),
-  clearShopPrice: (shopId, itemId) => shops.clearShopPrice(shopId, itemId),
+  getShopPrices: (shopId) => http.get(`${base}/shops/${shopId}/prices`),
+  setShopPrice: (shopId, itemId, price) => http.put(`${base}/shops/${shopId}/prices/${itemId}`, { price }),
+  clearShopPrice: (shopId, itemId) => http.delete(`${base}/shops/${shopId}/prices/${itemId}`),
 
-  getOpenBill: (shopId) => bills.getOpenBill(shopId),
-  addBillEntry: (shopId, itemId, delta) => bills.addBillEntry(shopId, itemId, delta),
-  removeBillEntry: (shopId, entryId) => bills.removeBillEntry(shopId, entryId),
-  clearBill: (shopId, note) => bills.clearBill(shopId, note),
+  getOpenBill: (shopId) => http.get(`${base}/shops/${shopId}/open-bill`),
+  addBillEntry: (shopId, itemId, delta) => http.post(`${base}/shops/${shopId}/bill-entries`, { itemId, delta }),
+  removeBillEntry: (shopId, entryId) => http.delete(`${base}/shops/${shopId}/bill-entries/${entryId}`),
+  clearBill: (shopId, note) => http.post(`${base}/shops/${shopId}/clear-bill`, { note }),
 
-  getShopBills: (shopId) => bills.getShopBills(shopId),
-  getShopPayments: (shopId) => bills.getShopPayments(shopId),
-  createPayment: (shopId, billIds, note) => payments.createPayment(shopId, billIds, note),
-  createDirectPayment: (shopId, amount, note) => payments.createDirectPayment(shopId, amount, note),
-  deletePayment: (shopId, paymentId) => payments.deletePayment(shopId, paymentId),
+  getShopBills: (shopId) => http.get(`${base}/shops/${shopId}/bills`),
+  getShopPayments: (shopId) => http.get(`${base}/shops/${shopId}/payments`),
+  createPayment: (shopId, billIds, note) => http.post(`${base}/shops/${shopId}/payments`, { billIds, note }),
+  createDirectPayment: (shopId, amount, note) => http.post(`${base}/shops/${shopId}/payments/direct`, { amount, note }),
+  deletePayment: (shopId, paymentId) => http.delete(`${base}/shops/${shopId}/payments/${paymentId}`),
 
-  getHistory: (shopId) => bills.getHistory(shopId),
-  getBill: (billId) => bills.getBill(billId),
+  getHistory: (shopId) => http.get(`${base}/shops/${shopId}/history`),
+  getBill: (billId) => http.get(`${base}/bills/${billId}`),
 };

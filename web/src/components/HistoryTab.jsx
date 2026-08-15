@@ -60,7 +60,7 @@ export default function HistoryTab({ shopId }) {
             <span className="history-month-title">{group.label}</span>
             {group.key !== 'imported' && (
               <span className="history-month-summary tabular">
-                รับชำระ {formatMoney(group.paid)} · ลงหนี้ {formatMoney(group.billed)}
+                จ่ายหนี้ {formatMoney(group.paid)} · ลงหนี้ {formatMoney(group.billed)}
               </span>
             )}
           </div>
@@ -70,7 +70,7 @@ export default function HistoryTab({ shopId }) {
               <div className="history-entry" key={`payment-${entry.id}`} onClick={() => togglePayment(entry.id)}>
                 <div className="history-entry-top">
                   <div>
-                    <div className="history-entry-title payment">รับชำระเงิน · {entry.bills?.length ?? 0} บิล</div>
+                    <div className="history-entry-title payment">จ่ายหนี้ · {entry.bills?.length ?? 0} บิล</div>
                     <div className="history-entry-date">{formatDateTimeThai(entry.occurredAt)}</div>
                   </div>
                   <div className="history-entry-amount payment tabular">− {formatMoney(entry.amount)}</div>

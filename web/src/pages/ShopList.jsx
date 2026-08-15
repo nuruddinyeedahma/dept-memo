@@ -98,7 +98,7 @@ export default function ShopList() {
             </div>
           </div>
           <div className="stat-item">
-            <div className="stat-label">รับชำระเดือนนี้</div>
+            <div className="stat-label">จ่ายหนี้เดือนนี้</div>
             <div className="stat-value tabular positive">+ {summary ? formatMoney(summary.paymentsThisMonth) : '···'}</div>
           </div>
         </div>

@@ -7,7 +7,7 @@ import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function CurrentBillPage() {
   const { id } = useParams();
-  const shopId = Number(id);
+  const shopId = id;
   const [shop, setShop] = useState(null);
   const [bill, setBill] = useState(null);
   const [note, setNote] = useState('');
@@ -145,7 +145,7 @@ export default function CurrentBillPage() {
           บันทึกลงหนี้
         </button>
         <button className="btn btn-outline-gold" disabled={busy || shop.outstandingDebt === 0} onClick={() => setShowPayment(true)}>
-          รับชำระเงิน
+          จ่ายหนี้
         </button>
       </div>
 

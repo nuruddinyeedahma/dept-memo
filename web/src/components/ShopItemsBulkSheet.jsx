@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../api.js';
+import { adminApi as api } from '../adminApi.js';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function ShopItemsBulkSheet({ shopId, shopName, onClose, onSaved }) {

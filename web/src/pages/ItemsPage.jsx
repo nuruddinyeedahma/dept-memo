@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../api.js';
-import BottomNav from '../components/BottomNav.jsx';
+import { adminApi as api } from '../adminApi.js';
+import AdminNav from '../components/AdminNav.jsx';
 import ItemSheet from '../components/ItemSheet.jsx';
 import ShopItemsBulkSheet from '../components/ShopItemsBulkSheet.jsx';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
@@ -116,7 +116,7 @@ export default function ItemsPage() {
       </div>
 
       <div style={{ flex: 1 }} />
-      <BottomNav />
+      <AdminNav />
 
       {editItem && (
         <ItemSheet

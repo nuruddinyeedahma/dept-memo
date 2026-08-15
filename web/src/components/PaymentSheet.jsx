@@ -107,7 +107,7 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-handle" />
         <div>
-          <div className="sheet-title">รับชำระ · {shopName}</div>
+          <div className="sheet-title">จ่ายหนี้ · {shopName}</div>
           <div style={{ fontSize: 13, color: 'var(--muted-soft)', marginTop: 4 }}>
             เลือกบิลที่ต้องการเคลียร์ จะได้ยอดรวมอัตโนมัติ
           </div>
@@ -136,7 +136,7 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
           </div>
           {quickError && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{quickError}</p>}
           <button className="btn btn-green" disabled={busy || !quickAmount} onClick={handleQuickPay}>
-            บันทึกรับชำระด่วน
+            บันทึกจ่ายหนี้ด่วน
           </button>
         </div>
 

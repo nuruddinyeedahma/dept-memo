@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api.js';
+import { adminApi as api } from '../adminApi.js';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 export default function ItemSheet({ item, shops, categories, onClose, onSaved, onDeleted }) {
@@ -32,7 +32,7 @@ export default function ItemSheet({ item, shops, categories, onClose, onSaved, o
       if (!name.trim() || !Number.isFinite(priceValue) || priceValue < 0) {
         throw new Error('กรอกชื่อและราคาที่ถูกต้อง');
       }
-      await api.updateItem(item.id, { name: name.trim(), default_price: priceValue, category: category.trim(), active });
+      await api.updateItem(item.id, { name: name.trim(), defaultPrice: priceValue, category: category.trim(), active });
       await api.setItemShops(item.id, isGlobal ? [] : [...selected]);
       onSaved?.();
     } catch (err) {

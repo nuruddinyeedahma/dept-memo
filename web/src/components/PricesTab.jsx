@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
-import ShopItemsBulkSheet from './ShopItemsBulkSheet.jsx';
 
-export default function PricesTab({ shopId, shopName }) {
+export default function PricesTab({ shopId }) {
   const [prices, setPrices] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [search, setSearch] = useState('');
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [error, setError] = useState('');
-  const [showBulkPicker, setShowBulkPicker] = useState(false);
 
   async function load() {
     const list = await api.getShopPrices(shopId);
@@ -51,8 +49,7 @@ export default function PricesTab({ shopId, shopName }) {
       return;
     }
     try {
-      const created = await api.createItem(name, price, newItem.category.trim() || undefined);
-      await api.setItemShops(created.id, [shopId]);
+      await api.createItem(name, price, newItem.category.trim() || undefined, shopId);
       setNewItem({ name: '', price: '', category: '' });
       load();
     } catch (err) {
@@ -69,10 +66,6 @@ export default function PricesTab({ shopId, shopName }) {
       <div className="hint-text" style={{ textAlign: 'left' }}>
         ใส่ตัวเลขเพื่อตั้งราคาเฉพาะร้านนี้ · เว้นว่างไว้จะใช้ราคากลาง
       </div>
-
-      <button type="button" className="btn btn-outline-gold" onClick={() => setShowBulkPicker(true)}>
-        เลือกสินค้าหลายรายการ
-      </button>
 
       <div className="price-panel">
         {visible.map((item) => (
@@ -137,18 +130,6 @@ export default function PricesTab({ shopId, shopName }) {
           เพิ่มสินค้า
         </button>
       </div>
-
-      {showBulkPicker && (
-        <ShopItemsBulkSheet
-          shopId={shopId}
-          shopName={shopName}
-          onClose={() => setShowBulkPicker(false)}
-          onSaved={() => {
-            setShowBulkPicker(false);
-            load();
-          }}
-        />
-      )}
     </div>
   );
 }

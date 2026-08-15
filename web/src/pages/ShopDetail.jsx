@@ -16,7 +16,7 @@ const TABS = [
 
 export default function ShopDetail() {
   const { id } = useParams();
-  const shopId = Number(id);
+  const shopId = id;
   const [shop, setShop] = useState(null);
   const [tab, setTab] = useState('record');
   const [showEdit, setShowEdit] = useState(false);
@@ -72,7 +72,7 @@ export default function ShopDetail() {
             <span className="unit">บาท</span>
           </div>
           <button className="btn-pay-text" onClick={() => setShowPayment(true)}>
-            รับชำระ
+            จ่ายหนี้
           </button>
         </div>
 
@@ -86,7 +86,7 @@ export default function ShopDetail() {
       </div>
 
       {tab === 'record' && <RecordDebtTab shopId={shopId} />}
-      {tab === 'prices' && <PricesTab shopId={shopId} shopName={shop.name} />}
+      {tab === 'prices' && <PricesTab shopId={shopId} />}
       {tab === 'history' && <HistoryTab shopId={shopId} />}
 
       {showEdit && (

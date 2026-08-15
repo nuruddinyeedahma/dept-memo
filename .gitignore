@@ -2,3 +2,6 @@ node_modules/
 web/dist/
 web/dev-dist/
 .claude/settings.local.json
+.env
+.env.*
+.vercel

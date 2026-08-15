@@ -1,0 +1,14 @@
+{
+  "name": "บันทึกหนี้ร้านค้า",
+  "short_name": "บันทึกหนี้",
+  "description": "ระบบบันทึกหนี้ร้านค้า",
+  "theme_color": "#1F1A14",
+  "background_color": "#F7F2E7",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
