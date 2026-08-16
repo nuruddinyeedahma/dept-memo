@@ -18,11 +18,19 @@ function playClip(audio) {
   });
 }
 
+function roundUpTo(n, step) {
+  return Math.ceil(n / step) * step;
+}
+
 export default function ShopSellPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState(new Map());
   const [amountReceived, setAmountReceived] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [nameError, setNameError] = useState(false);
+  const [showChangeOverride, setShowChangeOverride] = useState(false);
+  const [changeOverrideValue, setChangeOverrideValue] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -32,7 +40,9 @@ export default function ShopSellPage() {
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [addItemError, setAddItemError] = useState('');
+  const [checkoutVisible, setCheckoutVisible] = useState(false);
   const checkoutRef = useRef(null);
+  const customerNameRef = useRef(null);
 
   function loadItems() {
     setLoading(true);
@@ -42,6 +52,15 @@ export default function ShopSellPage() {
   useEffect(() => {
     loadItems();
     playClip(doorChimeAudio);
+  }, []);
+
+  // Hide the floating running-total once the checkout section itself is on screen -
+  // it would otherwise sit fixed on top of it after "คิดเงิน" scrolls there.
+  useEffect(() => {
+    if (!checkoutRef.current) return;
+    const obs = new IntersectionObserver(([entry]) => setCheckoutVisible(entry.isIntersecting), { threshold: 0.15 });
+    obs.observe(checkoutRef.current);
+    return () => obs.disconnect();
   }, []);
 
   const categories = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))], [items]);
@@ -68,8 +87,25 @@ export default function ShopSellPage() {
   const cartQty = useMemo(() => cartEntries.reduce((s, e) => s + e.quantity, 0), [cartEntries]);
   const total = useMemo(() => cartEntries.reduce((s, e) => s + e.unitPrice * e.quantity, 0), [cartEntries]);
   const received = Number(amountReceived) || 0;
-  const change = Math.max(0, received - total);
+  const computedChange = Math.max(0, received - total);
   const customerOwed = Math.max(0, total - received);
+  const changeDiffers =
+    showChangeOverride && changeOverrideValue !== '' && Number(changeOverrideValue) !== computedChange;
+  const effectiveChange = changeDiffers ? Number(changeOverrideValue) : computedChange;
+  const needsName = customerOwed > 0 || changeDiffers;
+
+  const quickAmounts = useMemo(() => {
+    if (total <= 0) return [];
+    const seen = new Set();
+    const out = [];
+    for (const c of [total, roundUpTo(total, 5), roundUpTo(total, 10), roundUpTo(total, 20), roundUpTo(total, 50), roundUpTo(total, 100)]) {
+      if (!seen.has(c)) {
+        seen.add(c);
+        out.push(c);
+      }
+    }
+    return out;
+  }, [total]);
 
   async function handleSave() {
     setError('');
@@ -77,11 +113,26 @@ export default function ShopSellPage() {
       setError('เลือกสินค้าอย่างน้อย 1 รายการ');
       return;
     }
+    if (needsName && !customerName.trim()) {
+      setError('ลูกค้ายังไม่จ่ายครบหรือมีการปรับเงินทอน กรุณาใส่ชื่อลูกค้า');
+      setNameError(true);
+      customerNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      customerNameRef.current?.focus();
+      return;
+    }
     setBusy(true);
     try {
-      await shopApi.createSale({ items: cartEntries, amountReceived: received });
+      await shopApi.createSale({
+        items: cartEntries,
+        amountReceived: received,
+        customerName: needsName ? customerName.trim() : undefined,
+        changeOverride: changeDiffers ? Number(changeOverrideValue) : undefined,
+      });
       setCart(new Map());
       setAmountReceived('');
+      setCustomerName('');
+      setShowChangeOverride(false);
+      setChangeOverrideValue('');
       setSaved(true);
       playClip(cashRegisterAudio);
     } catch (err) {
@@ -194,20 +245,71 @@ export default function ShopSellPage() {
               value={amountReceived}
               onChange={(e) => {
                 setSaved(false);
+                setError('');
                 setAmountReceived(e.target.value);
               }}
             />
+            {quickAmounts.length > 0 && (
+              <div className="chip-row" style={{ marginTop: 8 }}>
+                {quickAmounts.map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    className={`chip ${received === amt ? 'active' : ''}`}
+                    onClick={() => {
+                      setSaved(false);
+                      setError('');
+                      setAmountReceived(String(amt));
+                    }}
+                  >
+                    {formatMoney(amt)}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="totals-row">
             <span>เงินทอน</span>
-            <span className="value tabular">{formatMoney(change)} บาท</span>
+            <span className="value tabular">{formatMoney(effectiveChange)} บาท</span>
           </div>
+          {!showChangeOverride ? (
+            <button type="button" className="change-override-toggle" onClick={() => setShowChangeOverride(true)}>
+              ปรับเงินทอน
+            </button>
+          ) : (
+            <div className="field-group">
+              <div className="field-label">เงินทอนจริงที่ให้ลูกค้า</div>
+              <input
+                className="field-input"
+                type="number"
+                value={changeOverrideValue}
+                placeholder={String(computedChange)}
+                onChange={(e) => setChangeOverrideValue(e.target.value)}
+              />
+            </div>
+          )}
           {customerOwed > 0 && (
             <div className="totals-row">
               <span>ลูกค้าค้าง</span>
               <span className="value tabular" style={{ color: 'var(--debt-red)' }}>
                 {formatMoney(customerOwed)} บาท
               </span>
+            </div>
+          )}
+          {needsName && (
+            <div className="field-group">
+              <div className="field-label">ชื่อลูกค้า (บังคับ)</div>
+              <input
+                ref={customerNameRef}
+                className={`field-input ${nameError ? 'field-input-error shake' : ''}`}
+                value={customerName}
+                onChange={(e) => {
+                  setCustomerName(e.target.value);
+                  setNameError(false);
+                }}
+                onAnimationEnd={() => setNameError(false)}
+                placeholder="เช่น พี่แดง, เบอร์โทร"
+              />
             </div>
           )}
         </div>
@@ -219,7 +321,7 @@ export default function ShopSellPage() {
         </button>
       </div>
 
-      {cartEntries.length > 0 && (
+      {cartEntries.length > 0 && !checkoutVisible && (
         <div className="cart-bar">
           <div>
             <div className="cart-label">ยอดขาย · {cartQty} ชิ้น</div>

@@ -982,6 +982,35 @@ a:hover {
   border-color: var(--gold);
 }
 
+.field-input-error {
+  border-color: var(--debt-red);
+}
+
+.change-override-toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--muted-faint);
+  text-decoration: underline;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@keyframes shake-x {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.shake {
+  animation: shake-x .4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shake { animation: none; }
+}
+
 /* Payment sheet: bill multi-select */
 .pay-section {
   display: flex;

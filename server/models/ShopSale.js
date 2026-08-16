@@ -20,6 +20,7 @@ const shopSaleSchema = new mongoose.Schema({
   amountReceived: { type: Number, required: true },
   change: { type: Number, required: true },
   customerOwed: { type: Number, default: 0 },
+  customerName: { type: String, default: null },
   note: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
 });

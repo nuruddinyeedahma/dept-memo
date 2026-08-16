@@ -61,7 +61,7 @@ router.post('/items', async (req, res) => {
 router.post('/sales', async (req, res) => {
   const shopId = myShopId(req, res);
   if (!shopId) return;
-  const { items, amountReceived, note } = req.body ?? {};
+  const { items, amountReceived, note, customerName, changeOverride } = req.body ?? {};
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'items must be a non-empty array' });
   }
@@ -79,8 +79,22 @@ router.post('/sales', async (req, res) => {
   }
 
   const total = cleanItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-  const change = Math.max(0, received - total);
+  const computedChange = Math.max(0, received - total);
   const customerOwed = Math.max(0, total - received);
+
+  let change = computedChange;
+  if (changeOverride !== undefined && changeOverride !== null && changeOverride !== '') {
+    const overridden = Number(changeOverride);
+    if (!Number.isFinite(overridden) || overridden < 0) return res.status(400).json({ error: 'invalid changeOverride' });
+    change = overridden;
+  }
+
+  // Anything off-script (customer still owes, or the change given doesn't match
+  // the exact computed amount) needs a name attached so it can be tracked down later.
+  const nameTrimmed = customerName?.trim() || null;
+  if ((customerOwed > 0 || change !== computedChange) && !nameTrimmed) {
+    return res.status(400).json({ error: 'customerName is required' });
+  }
 
   const sale = await ShopSale.create({
     shopId,
@@ -90,6 +104,7 @@ router.post('/sales', async (req, res) => {
     amountReceived: received,
     change,
     customerOwed,
+    customerName: nameTrimmed,
     note: note?.trim() || null,
   });
   res.json(sale);
