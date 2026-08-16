@@ -35,7 +35,7 @@ export default function App() {
       <Route path="/shop/prices" element={<RoleRoute roles={['shop']}><ShopPricesPage /></RoleRoute>} />
       <Route path="/shop/debts" element={<RoleRoute roles={['shop']}><ShopDebtsPage /></RoleRoute>} />
 
-      <Route path="/settings" element={<RoleRoute roles={['customer', 'admin']}><SettingsPage /></RoleRoute>} />
+      <Route path="/settings" element={<RoleRoute roles={['customer', 'admin', 'shop']}><SettingsPage /></RoleRoute>} />
     </Routes>
   );
 }

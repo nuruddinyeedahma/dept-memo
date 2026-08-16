@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import BottomNav from '../components/BottomNav.jsx';
 import AdminNav from '../components/AdminNav.jsx';
+import ShopNav from '../components/ShopNav.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+
+const ROLE_LABELS = { admin: 'แอดมิน', shop: 'ร้านค้า', customer: 'ลูกค้า' };
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -33,7 +36,7 @@ export default function SettingsPage() {
         <div className="add-item-card">
           <div className="add-item-card-title">บัญชี</div>
           <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>
-            เข้าสู่ระบบด้วย {user?.username} ({user?.role === 'admin' ? 'แอดมิน' : 'ลูกค้า'})
+            เข้าสู่ระบบด้วย {user?.username} ({ROLE_LABELS[user?.role] || user?.role})
           </p>
           <button className="btn btn-outline-gold" onClick={logout}>
             ออกจากระบบ
@@ -52,7 +55,7 @@ export default function SettingsPage() {
       </div>
 
       <div style={{ flex: 1 }} />
-      {user?.role === 'admin' ? <AdminNav /> : <BottomNav />}
+      {user?.role === 'admin' ? <AdminNav /> : user?.role === 'shop' ? <ShopNav /> : <BottomNav />}
     </div>
   );
 }

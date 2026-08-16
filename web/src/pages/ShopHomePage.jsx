@@ -1,17 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import ShopNav from '../components/ShopNav.jsx';
 
 export default function ShopHomePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
     <div className="app">
-      <div className="light-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="light-header">
         <div className="shop-title">{user?.shopName || user?.displayName || 'ร้านค้า'}</div>
-        <button className="btn-danger-text" onClick={logout}>
-          ออกจากระบบ
-        </button>
       </div>
 
       <div className="section-pad menu-card-list">
@@ -51,6 +49,9 @@ export default function ShopHomePage() {
           <span className="menu-card-arrow">›</span>
         </button>
       </div>
+
+      <div style={{ flex: 1 }} />
+      <ShopNav />
     </div>
   );
 }
