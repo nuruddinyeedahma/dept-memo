@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "dev": "node --env-file=.env.local scripts/dev-server.js",
+    "dev:prod-db": "node --env-file=.env scripts/dev-server.js"
+  },
   "dependencies": {
     "express": "^4.19.2",
     "mongoose": "^8.5.0",
