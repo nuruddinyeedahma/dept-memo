@@ -28,12 +28,43 @@ function playTones(tones) {
   }
 }
 
-// Two-tone door chime, played when walking into the sell page.
+// Bell-timbre tone (fundamental + a soft inharmonic overtone) for the door chime -
+// closer to an electronic entry chime than a plain sine beep.
+function playBellTone(ctx, freq, start, dur, peak = 0.28) {
+  for (const p of [{ mult: 1, gain: 1 }, { mult: 2.76, gain: 0.22 }]) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq * p.mult;
+    const g = peak * p.gain;
+    gain.gain.setValueAtTime(0, ctx.currentTime + start);
+    gain.gain.linearRampToValueAtTime(g, ctx.currentTime + start + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime + start);
+    osc.stop(ctx.currentTime + start + dur + 0.02);
+  }
+}
+
+// Four-note "ding-dong-ding-dong" entry chime, played when walking into the sell
+// page - styled after a convenience-store door chime (can't reproduce 7-Eleven's
+// exact jingle, it's a trademarked sound, but this matches the shape/timbre).
 function playDoorChime() {
-  playTones([
-    { freq: 880, start: 0, dur: 0.16 },
-    { freq: 659, start: 0.14, dur: 0.28 },
-  ]);
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const notes = [
+      { freq: 1046.5, start: 0 }, // C6
+      { freq: 784.0, start: 0.12 }, // G5
+      { freq: 1046.5, start: 0.24 }, // C6
+      { freq: 784.0, start: 0.36 }, // G5
+    ];
+    for (const n of notes) playBellTone(ctx, n.freq, n.start, 0.24);
+    setTimeout(() => ctx.close(), 900);
+  } catch {
+    // Web Audio unavailable - silently skip, sound is a nice-to-have.
+  }
 }
 
 // Bright cash-register "cha-ching", played after a sale is saved.
