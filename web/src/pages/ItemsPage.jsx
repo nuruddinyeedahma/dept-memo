@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminApi as api } from '../adminApi.js';
 import AdminNav from '../components/AdminNav.jsx';
 import ItemSheet from '../components/ItemSheet.jsx';
@@ -7,6 +8,7 @@ import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 import Loader from '../components/Loader.jsx';
 
 export default function ItemsPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [shops, setShops] = useState([]);
   const [search, setSearch] = useState('');
@@ -113,6 +115,9 @@ export default function ItemsPage() {
         </button>
         <button className="btn btn-outline-gold" onClick={() => setShowShopPicker(true)}>
           เลือกสินค้าหลายรายการ
+        </button>
+        <button className="btn btn-outline-gold" onClick={() => navigate('/admin/items/categories')}>
+          จัดการหมวดหมู่แบบ bulk
         </button>
       </div>
 

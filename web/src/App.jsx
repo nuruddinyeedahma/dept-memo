@@ -7,6 +7,7 @@ import SettingsPage from './pages/SettingsPage.jsx';
 import AdminShopsPage from './pages/AdminShopsPage.jsx';
 import AdminUsersPage from './pages/AdminUsersPage.jsx';
 import ItemsPage from './pages/ItemsPage.jsx';
+import AdminCategoriesPage from './pages/AdminCategoriesPage.jsx';
 import ShopHomePage from './pages/ShopHomePage.jsx';
 import ShopSellPage from './pages/ShopSellPage.jsx';
 import ShopHistoryPage from './pages/ShopHistoryPage.jsx';
@@ -25,6 +26,7 @@ export default function App() {
 
       <Route path="/admin" element={<RoleRoute roles={['admin']}><AdminShopsPage /></RoleRoute>} />
       <Route path="/admin/items" element={<RoleRoute roles={['admin']}><ItemsPage /></RoleRoute>} />
+      <Route path="/admin/items/categories" element={<RoleRoute roles={['admin']}><AdminCategoriesPage /></RoleRoute>} />
       <Route path="/admin/users" element={<RoleRoute roles={['admin']}><AdminUsersPage /></RoleRoute>} />
 
       <Route path="/shop" element={<RoleRoute roles={['shop']}><ShopHomePage /></RoleRoute>} />

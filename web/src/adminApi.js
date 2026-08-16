@@ -20,4 +20,5 @@ export const adminApi = {
   setItemShops: (id, shopIds) => http.put(`${base}/items/${id}/shops`, { shopIds }),
   setShopPrice: (shopId, itemId, price) => http.put(`${base}/shops/${shopId}/prices/${itemId}`, { price }),
   bulkSetShopItems: (shopId, includedItemIds) => http.post(`${base}/shops/${shopId}/bulk-items`, { includedItemIds }),
+  bulkSetItemCategory: (itemIds, category) => http.post(`${base}/items/bulk-category`, { itemIds, category }),
 };

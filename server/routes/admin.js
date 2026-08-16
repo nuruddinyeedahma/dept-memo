@@ -168,6 +168,16 @@ router.delete('/items/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/items/bulk-category', async (req, res) => {
+  const { itemIds, category } = req.body ?? {};
+  if (!Array.isArray(itemIds) || itemIds.length === 0) {
+    return res.status(400).json({ error: 'itemIds is required' });
+  }
+  const trimmed = String(category ?? '').trim() || null;
+  await Item.updateMany({ _id: { $in: itemIds } }, { $set: { category: trimmed } });
+  res.json({ ok: true });
+});
+
 router.put('/items/:id/shops', async (req, res) => {
   const item = await Item.findById(req.params.id);
   if (!item) return res.status(404).json({ error: 'item not found' });
