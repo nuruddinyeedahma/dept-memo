@@ -36,7 +36,8 @@ export default function ShopSellPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
   const [activeChip, setActiveChip] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [showSearch, setShowSearch] = useState(false);
@@ -86,7 +87,6 @@ export default function ShopSellPage() {
   }, [items, activeChip, sortBy, search]);
 
   function changeQty(item, delta) {
-    setSaved(false);
     setCart((prev) => {
       const next = new Map(prev);
       const existing = next.get(item.id);
@@ -164,6 +164,7 @@ export default function ShopSellPage() {
         customerName: customerName.trim() || undefined,
         changeOverride: changeDiffers ? Number(changeOverrideValue) : undefined,
       });
+      setLastSaved({ total: combinedTotal, change: effectiveChange, owed: customerOwed });
       setCart(new Map());
       setAmountReceived('');
       setCustomerName('');
@@ -171,7 +172,7 @@ export default function ShopSellPage() {
       setShowCustomerPicker(false);
       setShowChangeOverride(false);
       setChangeOverrideValue('');
-      setSaved(true);
+      setShowSuccessDialog(true);
       shopApi.getDebts().then(setExistingDebts);
       playClip(cashRegisterAudio);
     } catch (err) {
@@ -334,7 +335,6 @@ export default function ShopSellPage() {
               type="number"
               value={amountReceived}
               onChange={(e) => {
-                setSaved(false);
                 setError('');
                 setAmountReceived(e.target.value);
               }}
@@ -347,7 +347,6 @@ export default function ShopSellPage() {
                     type="button"
                     className={`chip ${received === amt ? 'active' : ''}`}
                     onClick={() => {
-                      setSaved(false);
                       setError('');
                       setAmountReceived(String(amt));
                     }}
@@ -389,7 +388,6 @@ export default function ShopSellPage() {
         </div>
 
         {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
-        {saved && <p style={{ color: 'var(--gold-soft)', fontSize: 13, margin: 0 }}>✓ บันทึกรายการขายแล้ว</p>}
         <button className="btn btn-dark" disabled={busy || cartEntries.length === 0} onClick={handleSave}>
           บันทึกการขาย
         </button>
@@ -404,6 +402,35 @@ export default function ShopSellPage() {
           <button className="cart-btn" onClick={() => checkoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
             คิดเงิน<span>›</span>
           </button>
+        </div>
+      )}
+
+      {showSuccessDialog && lastSaved && (
+        <div className="modal-backdrop" onClick={() => setShowSuccessDialog(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="serif">บันทึกรายการขายแล้ว</h2>
+            <div className="totals-row">
+              <span>ยอดรวม</span>
+              <span className="value tabular">{formatMoney(lastSaved.total)} บาท</span>
+            </div>
+            <div className="totals-row">
+              <span>เงินทอน</span>
+              <span className="value tabular">{formatMoney(lastSaved.change)} บาท</span>
+            </div>
+            {lastSaved.owed > 0 && (
+              <div className="totals-row">
+                <span>ลูกค้าค้าง</span>
+                <span className="value tabular" style={{ color: 'var(--debt-red)' }}>
+                  {formatMoney(lastSaved.owed)} บาท
+                </span>
+              </div>
+            )}
+            <div className="modal-actions">
+              <button className="btn btn-dark" style={{ flex: 1 }} onClick={() => navigate('/shop')}>
+                รับทราบ
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
