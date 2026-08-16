@@ -30,9 +30,35 @@ router.get('/items', async (req, res) => {
         name: item.name,
         category: item.category,
         price: override ? override.price : item.defaultPrice,
+        defaultPrice: item.defaultPrice,
+        isOverride: !!override,
       };
     })
   );
+});
+
+router.put('/prices/:itemId', async (req, res) => {
+  const shopId = myShopId(req, res);
+  if (!shopId) return;
+  const item = await Item.findById(req.params.itemId);
+  if (!item) return res.status(404).json({ error: 'item not found' });
+  const price = Number(req.body?.price);
+  if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'invalid price' });
+  const idx = item.priceOverrides.findIndex((o) => String(o.shopId) === String(shopId));
+  if (idx >= 0) item.priceOverrides[idx].price = price;
+  else item.priceOverrides.push({ shopId, price });
+  await item.save();
+  res.json({ itemId: item._id, price });
+});
+
+router.delete('/prices/:itemId', async (req, res) => {
+  const shopId = myShopId(req, res);
+  if (!shopId) return;
+  const item = await Item.findById(req.params.itemId);
+  if (!item) return res.status(404).json({ error: 'item not found' });
+  item.priceOverrides = item.priceOverrides.filter((o) => String(o.shopId) !== String(shopId));
+  await item.save();
+  res.json({ ok: true });
 });
 
 router.post('/items', async (req, res) => {

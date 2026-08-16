@@ -10,6 +10,8 @@ export default function RecordDebtTab({ shopId, initialPrices, initialBill }) {
   const [busy, setBusy] = useState(false);
   const [activeChip, setActiveChip] = useState('frequent');
   const [sortBy, setSortBy] = useState('name');
+  const [showSearch, setShowSearch] = useState(false);
+  const [search, setSearch] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [error, setError] = useState('');
@@ -51,6 +53,12 @@ export default function RecordDebtTab({ shopId, initialPrices, initialBill }) {
   }, [bill]);
 
   const visibleItems = useMemo(() => {
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      const list = prices.filter((p) => p.name.toLowerCase().includes(q));
+      if (sortBy === 'price') return list.sort((a, b) => a.effectivePrice - b.effectivePrice);
+      return list.sort((a, b) => a.name.localeCompare(b.name, 'th'));
+    }
     if (activeChip === 'frequent') {
       return [...prices].filter((p) => p.timesUsed > 0).sort((a, b) => b.timesUsed - a.timesUsed);
     }
@@ -59,7 +67,7 @@ export default function RecordDebtTab({ shopId, initialPrices, initialBill }) {
       return list.sort((a, b) => a.effectivePrice - b.effectivePrice);
     }
     return list.sort((a, b) => a.name.localeCompare(b.name, 'th'));
-  }, [prices, activeChip, sortBy]);
+  }, [prices, activeChip, sortBy, search]);
 
   async function changeQty(itemId, delta) {
     setBusy(true);
@@ -120,15 +128,39 @@ export default function RecordDebtTab({ shopId, initialPrices, initialBill }) {
             </button>
           ))}
         </div>
-        {activeChip !== 'frequent' && (
-          <div className="sort-row">
-            <span className="sort-label">เรียงตาม</span>
-            <button className={`sort-btn ${sortBy === 'name' ? 'active' : ''}`} onClick={() => setSortBy('name')}>
-              ชื่อ ก-ฮ
-            </button>
-            <button className={`sort-btn ${sortBy === 'price' ? 'active' : ''}`} onClick={() => setSortBy('price')}>
-              ราคา
-            </button>
+        <div className="sort-row">
+          {activeChip !== 'frequent' && !search && (
+            <>
+              <span className="sort-label">เรียงตาม</span>
+              <button className={`sort-btn ${sortBy === 'name' ? 'active' : ''}`} onClick={() => setSortBy('name')}>
+                ชื่อ ก-ฮ
+              </button>
+              <button className={`sort-btn ${sortBy === 'price' ? 'active' : ''}`} onClick={() => setSortBy('price')}>
+                ราคา
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className="icon-btn-light"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => {
+              setShowSearch((s) => !s);
+              setSearch('');
+            }}
+          >
+            ⌕
+          </button>
+        </div>
+        {showSearch && (
+          <div className="search-box" style={{ marginTop: 10 }}>
+            <span style={{ color: 'var(--muted-faint)' }}>⌕</span>
+            <input
+              autoFocus
+              placeholder="ค้นหาสินค้า"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
         )}
       </div>

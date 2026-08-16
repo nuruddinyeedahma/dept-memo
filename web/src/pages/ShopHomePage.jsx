@@ -32,6 +32,15 @@ export default function ShopHomePage() {
           </span>
           <span className="menu-card-arrow">›</span>
         </button>
+
+        <button className="menu-card" onClick={() => navigate('/shop/prices')}>
+          <span className="menu-card-icon">฿</span>
+          <span className="menu-card-body">
+            <span className="menu-card-title">จัดการราคา</span>
+            <span className="menu-card-sub">ตั้งราคาสินค้าเฉพาะร้านนี้</span>
+          </span>
+          <span className="menu-card-arrow">›</span>
+        </button>
       </div>
     </div>
   );

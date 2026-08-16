@@ -483,14 +483,14 @@ a:hover {
 @media (max-width: 520px) {
   .fab {
     right: 20px;
-    transform: none;
+    --fab-x: 0px;
   }
 }
 
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   .fab {
     right: 20px;
-    transform: none;
+    --fab-x: 0px;
   }
 }
 

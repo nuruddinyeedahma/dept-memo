@@ -37,6 +37,8 @@ export default function ShopSellPage() {
   const [saved, setSaved] = useState(false);
   const [activeChip, setActiveChip] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [showSearch, setShowSearch] = useState(false);
+  const [search, setSearch] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [addItemError, setAddItemError] = useState('');
@@ -66,10 +68,16 @@ export default function ShopSellPage() {
   const categories = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))], [items]);
 
   const visibleItems = useMemo(() => {
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      const list = items.filter((i) => i.name.toLowerCase().includes(q));
+      if (sortBy === 'price') return list.sort((a, b) => a.price - b.price);
+      return list.sort((a, b) => a.name.localeCompare(b.name, 'th'));
+    }
     const list = activeChip === 'all' ? [...items] : items.filter((i) => i.category === activeChip);
     if (sortBy === 'price') return list.sort((a, b) => a.price - b.price);
     return list.sort((a, b) => a.name.localeCompare(b.name, 'th'));
-  }, [items, activeChip, sortBy]);
+  }, [items, activeChip, sortBy, search]);
 
   function changeQty(item, delta) {
     setSaved(false);
@@ -188,14 +196,35 @@ export default function ShopSellPage() {
               ))}
             </div>
             <div className="sort-row">
-              <span className="sort-label">เรียงตาม</span>
-              <button className={`sort-btn ${sortBy === 'name' ? 'active' : ''}`} onClick={() => setSortBy('name')}>
-                ชื่อ ก-ฮ
-              </button>
-              <button className={`sort-btn ${sortBy === 'price' ? 'active' : ''}`} onClick={() => setSortBy('price')}>
-                ราคา
+              {!search && (
+                <>
+                  <span className="sort-label">เรียงตาม</span>
+                  <button className={`sort-btn ${sortBy === 'name' ? 'active' : ''}`} onClick={() => setSortBy('name')}>
+                    ชื่อ ก-ฮ
+                  </button>
+                  <button className={`sort-btn ${sortBy === 'price' ? 'active' : ''}`} onClick={() => setSortBy('price')}>
+                    ราคา
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                className="icon-btn-light"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => {
+                  setShowSearch((s) => !s);
+                  setSearch('');
+                }}
+              >
+                ⌕
               </button>
             </div>
+            {showSearch && (
+              <div className="search-box" style={{ marginTop: 10 }}>
+                <span style={{ color: 'var(--muted-faint)' }}>⌕</span>
+                <input autoFocus placeholder="ค้นหาสินค้า" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
+            )}
 
             <div className="item-grid">
               {visibleItems.map((item) => {

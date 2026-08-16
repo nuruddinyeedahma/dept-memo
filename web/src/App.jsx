@@ -10,6 +10,7 @@ import ItemsPage from './pages/ItemsPage.jsx';
 import ShopHomePage from './pages/ShopHomePage.jsx';
 import ShopSellPage from './pages/ShopSellPage.jsx';
 import ShopHistoryPage from './pages/ShopHistoryPage.jsx';
+import ShopPricesPage from './pages/ShopPricesPage.jsx';
 import RoleRoute from './components/RoleRoute.jsx';
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
       <Route path="/shop" element={<RoleRoute roles={['shop']}><ShopHomePage /></RoleRoute>} />
       <Route path="/shop/sell" element={<RoleRoute roles={['shop']}><ShopSellPage /></RoleRoute>} />
       <Route path="/shop/history" element={<RoleRoute roles={['shop']}><ShopHistoryPage /></RoleRoute>} />
+      <Route path="/shop/prices" element={<RoleRoute roles={['shop']}><ShopPricesPage /></RoleRoute>} />
 
       <Route path="/settings" element={<RoleRoute roles={['customer', 'admin']}><SettingsPage /></RoleRoute>} />
     </Routes>
