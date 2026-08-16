@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { shopApi } from '../shopApi.js';
 import { formatMoney } from '../lib/format.js';
 import Loader from '../components/Loader.jsx';
+import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
 // Real clips (trimmed to cut the dead air at both ends - freesound.org, community
 // license), preloaded once so playback starts the instant they're triggered.
@@ -40,12 +41,15 @@ export default function ShopSellPage() {
   const [sortBy, setSortBy] = useState('name');
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
+  const [showCustomerPicker, setShowCustomerPicker] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
   const [addItemError, setAddItemError] = useState('');
   const [checkoutVisible, setCheckoutVisible] = useState(false);
   const checkoutRef = useRef(null);
   const customerNameRef = useRef(null);
+  useLockBodyScroll(showCustomerPicker || showAddItem);
 
   function loadItems() {
     setLoading(true);
@@ -96,36 +100,48 @@ export default function ShopSellPage() {
   const cartEntries = useMemo(() => [...cart.values()], [cart]);
   const cartQty = useMemo(() => cartEntries.reduce((s, e) => s + e.quantity, 0), [cartEntries]);
   const total = useMemo(() => cartEntries.reduce((s, e) => s + e.unitPrice * e.quantity, 0), [cartEntries]);
-  const received = Number(amountReceived) || 0;
-  const computedChange = Math.max(0, received - total);
-  const customerOwed = Math.max(0, total - received);
-  const changeDiffers =
-    showChangeOverride && changeOverrideValue !== '' && Number(changeOverrideValue) !== computedChange;
-  const effectiveChange = changeDiffers ? Number(changeOverrideValue) : computedChange;
-  const needsName = customerOwed > 0 || changeDiffers;
 
   const matchedDebt = useMemo(
     () => existingDebts.find((d) => d.customerName.trim().toLowerCase() === customerName.trim().toLowerCase()),
     [existingDebts, customerName]
   );
+  const oldOwed = matchedDebt?.totalOwed ?? 0;
+  // Picking an existing debtor folds their open balance into today's total, so
+  // the cashier collects one combined amount instead of two separate ones.
+  const combinedTotal = total + oldOwed;
+
+  const received = Number(amountReceived) || 0;
+  const computedChange = Math.max(0, received - combinedTotal);
+  const customerOwed = Math.max(0, combinedTotal - received);
+  const changeDiffers =
+    showChangeOverride && changeOverrideValue !== '' && Number(changeOverrideValue) !== computedChange;
+  const effectiveChange = changeDiffers ? Number(changeOverrideValue) : computedChange;
+  const needsName = customerOwed > 0 || changeDiffers;
+
   const customerSuggestions = useMemo(() => {
-    const q = customerName.trim().toLowerCase();
-    const list = q ? existingDebts.filter((d) => d.customerName.toLowerCase().includes(q)) : existingDebts;
-    return list.slice(0, 8);
-  }, [existingDebts, customerName]);
+    const q = customerSearch.trim().toLowerCase();
+    return q ? existingDebts.filter((d) => d.customerName.toLowerCase().includes(q)) : existingDebts;
+  }, [existingDebts, customerSearch]);
 
   const quickAmounts = useMemo(() => {
-    if (total <= 0) return [];
+    if (combinedTotal <= 0) return [];
     const seen = new Set();
     const out = [];
-    for (const c of [total, roundUpTo(total, 5), roundUpTo(total, 10), roundUpTo(total, 20), roundUpTo(total, 50), roundUpTo(total, 100)]) {
+    for (const c of [
+      combinedTotal,
+      roundUpTo(combinedTotal, 5),
+      roundUpTo(combinedTotal, 10),
+      roundUpTo(combinedTotal, 20),
+      roundUpTo(combinedTotal, 50),
+      roundUpTo(combinedTotal, 100),
+    ]) {
       if (!seen.has(c)) {
         seen.add(c);
         out.push(c);
       }
     }
     return out;
-  }, [total]);
+  }, [combinedTotal]);
 
   async function handleSave() {
     setError('');
@@ -151,6 +167,8 @@ export default function ShopSellPage() {
       setCart(new Map());
       setAmountReceived('');
       setCustomerName('');
+      setCustomerSearch('');
+      setShowCustomerPicker(false);
       setShowChangeOverride(false);
       setChangeOverrideValue('');
       setSaved(true);
@@ -185,49 +203,30 @@ export default function ShopSellPage() {
   return (
     <div className="app">
       <div className="light-header">
-        <div className="back-row">
-          <button className="back-arrow" onClick={() => navigate('/shop')}>
-            ←
+        <div className="back-row" style={{ justifyContent: 'space-between' }}>
+          <div className="back-row">
+            <button className="back-arrow" onClick={() => navigate('/shop')}>
+              ←
+            </button>
+            <div className="shop-title">สร้างรายการขาย</div>
+          </div>
+          <button
+            type="button"
+            className={`chip ${customerName ? 'active' : ''}`}
+            onClick={() => setShowCustomerPicker(true)}
+          >
+            {customerName || 'ลูกค้า'}
           </button>
-          <div className="shop-title">สร้างรายการขาย</div>
         </div>
       </div>
 
       <div className="section-pad">
-        <div className="field-group">
-          <div className="field-label">{needsName ? 'ลูกค้า (บังคับ - ยังไม่จ่ายครบ)' : 'ลูกค้า (ถ้ามี)'}</div>
-          <input
-            ref={customerNameRef}
-            className={`field-input ${nameError ? 'field-input-error shake' : ''}`}
-            value={customerName}
-            onChange={(e) => {
-              setCustomerName(e.target.value);
-              setNameError(false);
-            }}
-            onAnimationEnd={() => setNameError(false)}
-            placeholder="พิมพ์ชื่อ หรือเลือกลูกค้าที่เคยค้างไว้"
-          />
-          {customerSuggestions.length > 0 && (
-            <div className="chip-row" style={{ marginTop: 8 }}>
-              {customerSuggestions.map((d) => (
-                <button
-                  key={d.customerName}
-                  type="button"
-                  className={`chip ${customerName.trim() === d.customerName ? 'active' : ''}`}
-                  onClick={() => setCustomerName(d.customerName)}
-                >
-                  {d.customerName} · ค้าง {formatMoney(d.totalOwed)}
-                </button>
-              ))}
-            </div>
-          )}
-          {matchedDebt && (
-            <div className="hint-text" style={{ textAlign: 'left', color: 'var(--debt-red)', marginTop: 6 }}>
-              ลูกค้าคนนี้มียอดค้างอยู่ก่อนแล้ว {formatMoney(matchedDebt.totalOwed)} บาท ({matchedDebt.saleCount} รายการ) -
-              บันทึกขายนี้จะไม่รวมยอดเก่าให้อัตโนมัติ ไปที่ "รับชำระหนี้" เพื่อปิดยอดรวมทีหลัง
-            </div>
-          )}
-        </div>
+        {matchedDebt && (
+          <div className="hint-text" style={{ textAlign: 'left', color: 'var(--debt-red)' }}>
+            "{matchedDebt.customerName}" มียอดค้างเดิมอยู่ {formatMoney(matchedDebt.totalOwed)} บาท ({matchedDebt.saleCount}{' '}
+            รายการ) - บิลนี้จะรวมยอดเก่าเข้ากับยอดขายวันนี้ให้อัตโนมัติ
+          </div>
+        )}
 
         {loading ? (
           <Loader />
@@ -310,9 +309,23 @@ export default function ShopSellPage() {
         )}
 
         <div ref={checkoutRef} className="totals-box">
+          {matchedDebt && (
+            <>
+              <div className="totals-row">
+                <span>ยอดขายวันนี้</span>
+                <span className="value tabular">{formatMoney(total)} บาท</span>
+              </div>
+              <div className="totals-row">
+                <span>หนี้เดิม</span>
+                <span className="value tabular" style={{ color: 'var(--debt-red)' }}>
+                  {formatMoney(oldOwed)} บาท
+                </span>
+              </div>
+            </>
+          )}
           <div className="totals-row grand">
-            <span className="label">ยอดรวม</span>
-            <span className="value tabular">{formatMoney(total)} บาท</span>
+            <span className="label">{matchedDebt ? 'ยอดรวมที่ต้องเก็บ' : 'ยอดรวม'}</span>
+            <span className="value tabular">{formatMoney(combinedTotal)} บาท</span>
           </div>
           <div className="field-group">
             <div className="field-label">รับเงินมา</div>
@@ -391,6 +404,77 @@ export default function ShopSellPage() {
           <button className="cart-btn" onClick={() => checkoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
             คิดเงิน<span>›</span>
           </button>
+        </div>
+      )}
+
+      {showCustomerPicker && (
+        <div className="sheet-backdrop" onClick={() => setShowCustomerPicker(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <div className="sheet-title">เลือกลูกค้า</div>
+            <div className="search-box">
+              <span style={{ color: 'var(--muted-faint)' }}>⌕</span>
+              <input
+                autoFocus
+                placeholder="พิมพ์ชื่อลูกค้า"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+              />
+            </div>
+
+            {customerSearch.trim() &&
+              !existingDebts.some((d) => d.customerName.toLowerCase() === customerSearch.trim().toLowerCase()) && (
+                <button
+                  type="button"
+                  className="btn btn-outline-gold"
+                  onClick={() => {
+                    setCustomerName(customerSearch.trim());
+                    setCustomerSearch('');
+                    setShowCustomerPicker(false);
+                  }}
+                >
+                  ใช้ชื่อ "{customerSearch.trim()}" (ลูกค้าใหม่)
+                </button>
+              )}
+
+            {customerSuggestions.length === 0 ? (
+              <p className="empty-state">ไม่มีลูกค้าที่ค้างชำระตรงกับที่ค้นหา</p>
+            ) : (
+              <div className="shop-list-panel">
+                {customerSuggestions.map((d) => (
+                  <button
+                    key={d.customerName}
+                    className="shop-row"
+                    onClick={() => {
+                      setCustomerName(d.customerName);
+                      setCustomerSearch('');
+                      setShowCustomerPicker(false);
+                    }}
+                  >
+                    <div>
+                      <div className="shop-row-name">{d.customerName}</div>
+                      <div className="shop-row-sub">{d.saleCount} รายการค้าง</div>
+                    </div>
+                    <div className="shop-row-amount tabular">{formatMoney(d.totalOwed)}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {customerName && (
+              <button
+                type="button"
+                className="btn-danger-text"
+                onClick={() => {
+                  setCustomerName('');
+                  setCustomerSearch('');
+                  setShowCustomerPicker(false);
+                }}
+              >
+                ล้างลูกค้าที่เลือกไว้
+              </button>
+            )}
+          </div>
         </div>
       )}
 

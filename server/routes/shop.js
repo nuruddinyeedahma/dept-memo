@@ -106,8 +106,22 @@ router.post('/sales', async (req, res) => {
   }
 
   const total = cleanItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-  const computedChange = Math.max(0, received - total);
-  const customerOwed = Math.max(0, total - received);
+  const nameTrimmed = customerName?.trim() || null;
+
+  // Roll any of this customer's existing open debt into today's total, so the
+  // cashier collects one combined amount instead of tracking two balances.
+  // Looked up fresh here (not trusted from the client) to avoid acting on a
+  // stale debt figure the sell page may have cached.
+  let oldUnpaidSales = [];
+  let oldOwedSum = 0;
+  if (nameTrimmed) {
+    oldUnpaidSales = await ShopSale.find({ shopId, customerName: nameTrimmed, customerOwed: { $gt: 0 }, paymentId: null });
+    oldOwedSum = oldUnpaidSales.reduce((s, x) => s + x.customerOwed, 0);
+  }
+
+  const combinedTotal = total + oldOwedSum;
+  const computedChange = Math.max(0, received - combinedTotal);
+  const customerOwed = Math.max(0, combinedTotal - received);
 
   let change = computedChange;
   if (changeOverride !== undefined && changeOverride !== null && changeOverride !== '') {
@@ -118,7 +132,6 @@ router.post('/sales', async (req, res) => {
 
   // Anything off-script (customer still owes, or the change given doesn't match
   // the exact computed amount) needs a name attached so it can be tracked down later.
-  const nameTrimmed = customerName?.trim() || null;
   if ((customerOwed > 0 || change !== computedChange) && !nameTrimmed) {
     return res.status(400).json({ error: 'customerName is required' });
   }
@@ -134,6 +147,18 @@ router.post('/sales', async (req, res) => {
     customerName: nameTrimmed,
     note: note?.trim() || null,
   });
+
+  if (oldUnpaidSales.length > 0) {
+    const rollup = await ShopDebtPayment.create({
+      shopId,
+      customerName: nameTrimmed,
+      saleIds: oldUnpaidSales.map((s) => s._id),
+      amount: oldOwedSum,
+      note: 'รวมยอดเข้ากับรายการขายใหม่',
+    });
+    await ShopSale.updateMany({ _id: { $in: oldUnpaidSales.map((s) => s._id) } }, { $set: { paymentId: rollup._id } });
+  }
+
   res.json(sale);
 });
 
