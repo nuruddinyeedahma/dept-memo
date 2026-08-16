@@ -25,6 +25,7 @@ function roundUpTo(n, step) {
 export default function ShopSellPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
+  const [existingDebts, setExistingDebts] = useState([]);
   const [cart, setCart] = useState(new Map());
   const [amountReceived, setAmountReceived] = useState('');
   const [customerName, setCustomerName] = useState('');
@@ -53,6 +54,7 @@ export default function ShopSellPage() {
 
   useEffect(() => {
     loadItems();
+    shopApi.getDebts().then(setExistingDebts);
     playClip(doorChimeAudio);
   }, []);
 
@@ -102,6 +104,16 @@ export default function ShopSellPage() {
   const effectiveChange = changeDiffers ? Number(changeOverrideValue) : computedChange;
   const needsName = customerOwed > 0 || changeDiffers;
 
+  const matchedDebt = useMemo(
+    () => existingDebts.find((d) => d.customerName.trim().toLowerCase() === customerName.trim().toLowerCase()),
+    [existingDebts, customerName]
+  );
+  const customerSuggestions = useMemo(() => {
+    const q = customerName.trim().toLowerCase();
+    const list = q ? existingDebts.filter((d) => d.customerName.toLowerCase().includes(q)) : existingDebts;
+    return list.slice(0, 8);
+  }, [existingDebts, customerName]);
+
   const quickAmounts = useMemo(() => {
     if (total <= 0) return [];
     const seen = new Set();
@@ -133,7 +145,7 @@ export default function ShopSellPage() {
       await shopApi.createSale({
         items: cartEntries,
         amountReceived: received,
-        customerName: needsName ? customerName.trim() : undefined,
+        customerName: customerName.trim() || undefined,
         changeOverride: changeDiffers ? Number(changeOverrideValue) : undefined,
       });
       setCart(new Map());
@@ -142,6 +154,7 @@ export default function ShopSellPage() {
       setShowChangeOverride(false);
       setChangeOverrideValue('');
       setSaved(true);
+      shopApi.getDebts().then(setExistingDebts);
       playClip(cashRegisterAudio);
     } catch (err) {
       setError(err.message);
@@ -181,6 +194,41 @@ export default function ShopSellPage() {
       </div>
 
       <div className="section-pad">
+        <div className="field-group">
+          <div className="field-label">{needsName ? 'ลูกค้า (บังคับ - ยังไม่จ่ายครบ)' : 'ลูกค้า (ถ้ามี)'}</div>
+          <input
+            ref={customerNameRef}
+            className={`field-input ${nameError ? 'field-input-error shake' : ''}`}
+            value={customerName}
+            onChange={(e) => {
+              setCustomerName(e.target.value);
+              setNameError(false);
+            }}
+            onAnimationEnd={() => setNameError(false)}
+            placeholder="พิมพ์ชื่อ หรือเลือกลูกค้าที่เคยค้างไว้"
+          />
+          {customerSuggestions.length > 0 && (
+            <div className="chip-row" style={{ marginTop: 8 }}>
+              {customerSuggestions.map((d) => (
+                <button
+                  key={d.customerName}
+                  type="button"
+                  className={`chip ${customerName.trim() === d.customerName ? 'active' : ''}`}
+                  onClick={() => setCustomerName(d.customerName)}
+                >
+                  {d.customerName} · ค้าง {formatMoney(d.totalOwed)}
+                </button>
+              ))}
+            </div>
+          )}
+          {matchedDebt && (
+            <div className="hint-text" style={{ textAlign: 'left', color: 'var(--debt-red)', marginTop: 6 }}>
+              ลูกค้าคนนี้มียอดค้างอยู่ก่อนแล้ว {formatMoney(matchedDebt.totalOwed)} บาท ({matchedDebt.saleCount} รายการ) -
+              บันทึกขายนี้จะไม่รวมยอดเก่าให้อัตโนมัติ ไปที่ "รับชำระหนี้" เพื่อปิดยอดรวมทีหลัง
+            </div>
+          )}
+        </div>
+
         {loading ? (
           <Loader />
         ) : (
@@ -323,22 +371,6 @@ export default function ShopSellPage() {
               <span className="value tabular" style={{ color: 'var(--debt-red)' }}>
                 {formatMoney(customerOwed)} บาท
               </span>
-            </div>
-          )}
-          {needsName && (
-            <div className="field-group">
-              <div className="field-label">ชื่อลูกค้า (บังคับ)</div>
-              <input
-                ref={customerNameRef}
-                className={`field-input ${nameError ? 'field-input-error shake' : ''}`}
-                value={customerName}
-                onChange={(e) => {
-                  setCustomerName(e.target.value);
-                  setNameError(false);
-                }}
-                onAnimationEnd={() => setNameError(false)}
-                placeholder="เช่น พี่แดง, เบอร์โทร"
-              />
             </div>
           )}
         </div>
