@@ -4,76 +4,18 @@ import { shopApi } from '../shopApi.js';
 import { formatMoney } from '../lib/format.js';
 import Loader from '../components/Loader.jsx';
 
-// Small synthesized sound effects (no audio files to ship/copy).
-function playTones(tones) {
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx();
-    for (const t of tones) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = t.type ?? 'sine';
-      osc.frequency.value = t.freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime + t.start);
-      gain.gain.linearRampToValueAtTime(t.peak ?? 0.25, ctx.currentTime + t.start + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t.start + t.dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + t.start);
-      osc.stop(ctx.currentTime + t.start + t.dur + 0.02);
-    }
-    setTimeout(() => ctx.close(), 800);
-  } catch {
-    // Web Audio unavailable - silently skip, sound is a nice-to-have.
-  }
-}
+// Real clips (trimmed to cut the dead air at both ends - freesound.org, community
+// license), preloaded once so playback starts the instant they're triggered.
+const doorChimeAudio = new Audio('/sounds/door-chime.mp3');
+const cashRegisterAudio = new Audio('/sounds/cash-register.mp3');
+doorChimeAudio.preload = 'auto';
+cashRegisterAudio.preload = 'auto';
 
-// Bell-timbre tone (fundamental + a soft inharmonic overtone) for the door chime -
-// closer to an electronic entry chime than a plain sine beep.
-function playBellTone(ctx, freq, start, dur, peak = 0.28) {
-  for (const p of [{ mult: 1, gain: 1 }, { mult: 2.76, gain: 0.22 }]) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq * p.mult;
-    const g = peak * p.gain;
-    gain.gain.setValueAtTime(0, ctx.currentTime + start);
-    gain.gain.linearRampToValueAtTime(g, ctx.currentTime + start + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(ctx.currentTime + start);
-    osc.stop(ctx.currentTime + start + dur + 0.02);
-  }
-}
-
-// Four-note "ding-dong-ding-dong" entry chime, played when walking into the sell
-// page - styled after a convenience-store door chime (can't reproduce 7-Eleven's
-// exact jingle, it's a trademarked sound, but this matches the shape/timbre).
-function playDoorChime() {
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx();
-    const notes = [
-      { freq: 1046.5, start: 0 }, // C6
-      { freq: 784.0, start: 0.12 }, // G5
-      { freq: 1046.5, start: 0.24 }, // C6
-      { freq: 784.0, start: 0.36 }, // G5
-    ];
-    for (const n of notes) playBellTone(ctx, n.freq, n.start, 0.24);
-    setTimeout(() => ctx.close(), 900);
-  } catch {
-    // Web Audio unavailable - silently skip, sound is a nice-to-have.
-  }
-}
-
-// Bright cash-register "cha-ching", played after a sale is saved.
-function playCashSound() {
-  playTones([
-    { freq: 1318, start: 0, dur: 0.09, type: 'triangle', peak: 0.22 },
-    { freq: 1760, start: 0.07, dur: 0.1, type: 'triangle', peak: 0.22 },
-    { freq: 2093, start: 0.13, dur: 0.32, type: 'triangle', peak: 0.2 },
-  ]);
+function playClip(audio) {
+  audio.currentTime = 0;
+  audio.play().catch(() => {
+    // Autoplay can be blocked before the user has interacted with the page - fine, skip.
+  });
 }
 
 export default function ShopSellPage() {
@@ -99,7 +41,7 @@ export default function ShopSellPage() {
 
   useEffect(() => {
     loadItems();
-    playDoorChime();
+    playClip(doorChimeAudio);
   }, []);
 
   const categories = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))], [items]);
@@ -141,7 +83,7 @@ export default function ShopSellPage() {
       setCart(new Map());
       setAmountReceived('');
       setSaved(true);
-      playCashSound();
+      playClip(cashRegisterAudio);
     } catch (err) {
       setError(err.message);
     } finally {
