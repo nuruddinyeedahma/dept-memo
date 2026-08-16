@@ -4,32 +4,45 @@ import { shopApi } from '../shopApi.js';
 import { formatMoney } from '../lib/format.js';
 import Loader from '../components/Loader.jsx';
 
-// Short two-tone door-chime, synthesized (no audio file to ship/copy).
-function playChime() {
+// Small synthesized sound effects (no audio files to ship/copy).
+function playTones(tones) {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ctx = new Ctx();
-    const tones = [
-      { freq: 880, start: 0, dur: 0.16 },
-      { freq: 659, start: 0.14, dur: 0.28 },
-    ];
     for (const t of tones) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
+      osc.type = t.type ?? 'sine';
       osc.frequency.value = t.freq;
       gain.gain.setValueAtTime(0, ctx.currentTime + t.start);
-      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + t.start + 0.02);
+      gain.gain.linearRampToValueAtTime(t.peak ?? 0.25, ctx.currentTime + t.start + 0.015);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t.start + t.dur);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(ctx.currentTime + t.start);
       osc.stop(ctx.currentTime + t.start + t.dur + 0.02);
     }
-    setTimeout(() => ctx.close(), 600);
+    setTimeout(() => ctx.close(), 800);
   } catch {
     // Web Audio unavailable - silently skip, sound is a nice-to-have.
   }
+}
+
+// Two-tone door chime, played when walking into the sell page.
+function playDoorChime() {
+  playTones([
+    { freq: 880, start: 0, dur: 0.16 },
+    { freq: 659, start: 0.14, dur: 0.28 },
+  ]);
+}
+
+// Bright cash-register "cha-ching", played after a sale is saved.
+function playCashSound() {
+  playTones([
+    { freq: 1318, start: 0, dur: 0.09, type: 'triangle', peak: 0.22 },
+    { freq: 1760, start: 0.07, dur: 0.1, type: 'triangle', peak: 0.22 },
+    { freq: 2093, start: 0.13, dur: 0.32, type: 'triangle', peak: 0.2 },
+  ]);
 }
 
 export default function ShopSellPage() {
@@ -55,6 +68,7 @@ export default function ShopSellPage() {
 
   useEffect(() => {
     loadItems();
+    playDoorChime();
   }, []);
 
   const categories = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))], [items]);
@@ -96,7 +110,7 @@ export default function ShopSellPage() {
       setCart(new Map());
       setAmountReceived('');
       setSaved(true);
-      playChime();
+      playCashSound();
     } catch (err) {
       setError(err.message);
     } finally {
