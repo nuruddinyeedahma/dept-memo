@@ -1,34 +1,36 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { shopApi } from '../shopApi.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import { formatMoney, formatDateTimeThai } from '../lib/format.js';
+import { formatMoney } from '../lib/format.js';
+import Loader from '../components/Loader.jsx';
 
-export default function ShopPosPage() {
-  const { user, logout } = useAuth();
+export default function ShopSellPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [sales, setSales] = useState([]);
   const [cart, setCart] = useState(new Map());
   const [amountReceived, setAmountReceived] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  async function load() {
-    setLoading(true);
-    try {
-      const [itemList, saleList] = await Promise.all([shopApi.getItems(), shopApi.getSales()]);
-      setItems(itemList);
-      setSales(saleList);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [saved, setSaved] = useState(false);
+  const [activeChip, setActiveChip] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
 
   useEffect(() => {
-    load();
+    setLoading(true);
+    shopApi.getItems().then(setItems).finally(() => setLoading(false));
   }, []);
 
+  const categories = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))], [items]);
+
+  const visibleItems = useMemo(() => {
+    const list = activeChip === 'all' ? [...items] : items.filter((i) => i.category === activeChip);
+    if (sortBy === 'price') return list.sort((a, b) => a.price - b.price);
+    return list.sort((a, b) => a.name.localeCompare(b.name, 'th'));
+  }, [items, activeChip, sortBy]);
+
   function changeQty(item, delta) {
+    setSaved(false);
     setCart((prev) => {
       const next = new Map(prev);
       const existing = next.get(item.id);
@@ -56,7 +58,7 @@ export default function ShopPosPage() {
       await shopApi.createSale({ items: cartEntries, amountReceived: received });
       setCart(new Map());
       setAmountReceived('');
-      load();
+      setSaved(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -66,19 +68,42 @@ export default function ShopPosPage() {
 
   return (
     <div className="app">
-      <div className="light-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="shop-title">{user?.displayName || 'ขายของ'}</div>
-        <button className="btn-danger-text" onClick={logout}>
-          ออกจากระบบ
-        </button>
+      <div className="light-header">
+        <div className="back-row">
+          <button className="back-arrow" onClick={() => navigate('/shop')}>
+            ←
+          </button>
+          <div className="shop-title">สร้างรายการขาย</div>
+        </div>
       </div>
 
       <div className="section-pad">
         {loading ? (
-          <p className="empty-state">กำลังโหลด...</p>
+          <Loader />
         ) : (
-          <div className="item-grid">
-            {items.map((item) => {
+          <>
+            <div className="chip-row">
+              <button className={`chip ${activeChip === 'all' ? 'active' : ''}`} onClick={() => setActiveChip('all')}>
+                ทั้งหมด
+              </button>
+              {categories.map((c) => (
+                <button key={c} className={`chip ${activeChip === c ? 'active' : ''}`} onClick={() => setActiveChip(c)}>
+                  {c}
+                </button>
+              ))}
+            </div>
+            <div className="sort-row">
+              <span className="sort-label">เรียงตาม</span>
+              <button className={`sort-btn ${sortBy === 'name' ? 'active' : ''}`} onClick={() => setSortBy('name')}>
+                ชื่อ ก-ฮ
+              </button>
+              <button className={`sort-btn ${sortBy === 'price' ? 'active' : ''}`} onClick={() => setSortBy('price')}>
+                ราคา
+              </button>
+            </div>
+
+            <div className="item-grid">
+            {visibleItems.map((item) => {
               const qty = cart.get(item.id)?.quantity ?? 0;
               return (
                 <div key={item.id} className={`item-tile ${qty > 0 ? 'active' : ''}`}>
@@ -103,7 +128,8 @@ export default function ShopPosPage() {
                 </div>
               );
             })}
-          </div>
+            </div>
+          </>
         )}
 
         <div className="totals-box">
@@ -117,7 +143,10 @@ export default function ShopPosPage() {
               className="field-input"
               type="number"
               value={amountReceived}
-              onChange={(e) => setAmountReceived(e.target.value)}
+              onChange={(e) => {
+                setSaved(false);
+                setAmountReceived(e.target.value);
+              }}
             />
           </div>
           <div className="totals-row">
@@ -135,30 +164,10 @@ export default function ShopPosPage() {
         </div>
 
         {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+        {saved && <p style={{ color: 'var(--gold-soft)', fontSize: 13, margin: 0 }}>✓ บันทึกรายการขายแล้ว</p>}
         <button className="btn btn-dark" disabled={busy || cartEntries.length === 0} onClick={handleSave}>
           บันทึกการขาย
         </button>
-
-        {sales.length > 0 && (
-          <>
-            <div className="add-item-card-title" style={{ marginTop: 10 }}>
-              รายการขายล่าสุด
-            </div>
-            <div className="price-panel">
-              {sales.slice(0, 20).map((sale) => (
-                <div className="price-row" key={sale._id}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="price-row-name">{formatDateTimeThai(sale.createdAt)}</div>
-                    <div className="price-row-default tabular">
-                      {sale.items.length} รายการ{sale.customerOwed > 0 ? ` · ค้าง ${formatMoney(sale.customerOwed)} บาท` : ''}
-                    </div>
-                  </div>
-                  <div className="shop-row-amount tabular">{formatMoney(sale.total)}</div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

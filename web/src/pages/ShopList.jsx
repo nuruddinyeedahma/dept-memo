@@ -124,7 +124,14 @@ export default function ShopList() {
         </div>
 
         {loading ? (
-          <p className="empty-state">กำลังโหลด...</p>
+          <div className="shop-list-panel">
+            {[0, 1, 2].map((i) => (
+              <div className="skeleton-row" key={i}>
+                <div className="skeleton" style={{ width: '40%', height: 16 }} />
+                <div className="skeleton" style={{ width: '65%', height: 12 }} />
+              </div>
+            ))}
+          </div>
         ) : visibleShops.length === 0 ? (
           <p className="empty-state">ไม่พบร้านที่ค้นหา ลองกด "+ เพิ่มร้าน" เพื่อเริ่มต้น</p>
         ) : (

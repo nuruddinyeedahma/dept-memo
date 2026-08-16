@@ -42,6 +42,10 @@ export function formatThaiMonthYear(iso) {
   return `${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 
+export function thaiMonthLabel(year, month0) {
+  return `${THAI_MONTHS[month0]} ${year + 543}`;
+}
+
 export function groupByThaiMonth(entries, dateField = 'occurredAt') {
   const dated = [];
   const undated = [];

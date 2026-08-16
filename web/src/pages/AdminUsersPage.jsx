@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { adminApi } from '../adminApi.js';
 import AdminNav from '../components/AdminNav.jsx';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
+import Loader from '../components/Loader.jsx';
 
 const ROLE_LABEL = { customer: 'ลูกค้า', shop: 'ร้านค้า', admin: 'แอดมิน' };
 
@@ -75,7 +76,7 @@ export default function AdminUsersPage() {
 
       <div className="section-pad">
         {loading ? (
-          <p className="empty-state">กำลังโหลด...</p>
+          <Loader />
         ) : (
           <div className="price-panel">
             {users.map((u) => (

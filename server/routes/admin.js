@@ -106,6 +106,15 @@ router.patch('/shops/:shopId', async (req, res) => {
   res.json(toShopDto(shop));
 });
 
+router.delete('/shops/:shopId', async (req, res) => {
+  const shop = await getShopById(req.params.shopId);
+  if ((await outstandingDebtOf(shop._id)) !== 0) {
+    return res.status(400).json({ error: 'shop still has outstanding debt' });
+  }
+  await Shop.deleteOne({ _id: shop._id });
+  res.json({ ok: true });
+});
+
 // ---------- Items ----------
 
 function toItemDto(item) {

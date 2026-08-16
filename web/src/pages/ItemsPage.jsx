@@ -4,6 +4,7 @@ import AdminNav from '../components/AdminNav.jsx';
 import ItemSheet from '../components/ItemSheet.jsx';
 import ShopItemsBulkSheet from '../components/ShopItemsBulkSheet.jsx';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
+import Loader from '../components/Loader.jsx';
 
 export default function ItemsPage() {
   const [items, setItems] = useState([]);
@@ -83,7 +84,7 @@ export default function ItemsPage() {
         </div>
 
         {loading ? (
-          <p className="empty-state">กำลังโหลด...</p>
+          <Loader />
         ) : visible.length === 0 ? (
           <p className="empty-state">ไม่พบสินค้า</p>
         ) : (

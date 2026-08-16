@@ -11,6 +11,7 @@ export const adminApi = {
   getShops: () => http.get(`${base}/shops`),
   createShop: (name) => http.post(`${base}/shops`, { name }),
   updateShop: (id, patch) => http.patch(`${base}/shops/${id}`, patch),
+  deleteShop: (id) => http.delete(`${base}/shops/${id}`),
 
   getItems: () => http.get(`${base}/items`),
   createItem: (name, defaultPrice, category) => http.post(`${base}/items`, { name, defaultPrice, category }),

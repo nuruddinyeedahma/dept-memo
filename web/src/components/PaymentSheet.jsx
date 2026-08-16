@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { formatMoney, formatDateTimeThai } from '../lib/format.js';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
+import Loader from '../components/Loader.jsx';
 
 export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
   useLockBodyScroll();
@@ -141,7 +142,7 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
         </div>
 
         {bills === null ? (
-          <p className="empty-state">กำลังโหลด...</p>
+          <Loader />
         ) : bills.length === 0 ? (
           <p className="empty-state">ร้านนี้ยังไม่มีบิลที่ผูกรายการสินค้า</p>
         ) : (

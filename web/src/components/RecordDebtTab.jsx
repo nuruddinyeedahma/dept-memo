@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { formatMoney } from '../lib/format.js';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 
-export default function RecordDebtTab({ shopId }) {
-  const [prices, setPrices] = useState([]);
-  const [bill, setBill] = useState(null);
+export default function RecordDebtTab({ shopId, initialPrices, initialBill }) {
+  const [prices, setPrices] = useState(initialPrices ?? []);
+  const [bill, setBill] = useState(initialBill ?? null);
   const [busy, setBusy] = useState(false);
   const [activeChip, setActiveChip] = useState('frequent');
   const [sortBy, setSortBy] = useState('name');
@@ -15,6 +15,9 @@ export default function RecordDebtTab({ shopId }) {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   useLockBodyScroll(showAddItem);
+  // ShopDetail may already have fetched prices/openBill in parallel with the shop
+  // itself; skip the redundant round trip on that first mount only.
+  const seededShopId = useRef(initialBill ? shopId : null);
 
   async function loadAll() {
     const [priceList, openBill] = await Promise.all([api.getShopPrices(shopId), api.getOpenBill(shopId)]);
@@ -23,6 +26,10 @@ export default function RecordDebtTab({ shopId }) {
   }
 
   useEffect(() => {
+    if (seededShopId.current === shopId) {
+      seededShopId.current = null;
+      return;
+    }
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopId]);
@@ -83,7 +90,17 @@ export default function RecordDebtTab({ shopId }) {
     }
   }
 
-  if (!bill) return <p className="empty-state" style={{ padding: 20 }}>กำลังโหลด...</p>;
+  if (!bill) {
+    return (
+      <div className="section-pad">
+        <div className="item-grid">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div className="skeleton skeleton-tile" key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>

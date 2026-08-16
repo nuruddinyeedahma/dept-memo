@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { adminApi } from '../adminApi.js';
 import { formatMoney } from '../lib/format.js';
 import AdminNav from '../components/AdminNav.jsx';
+import EditShopSheet from '../components/EditShopSheet.jsx';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
+import Loader from '../components/Loader.jsx';
 
 export default function AdminShopsPage() {
   const [shops, setShops] = useState([]);
@@ -11,6 +13,7 @@ export default function AdminShopsPage() {
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [error, setError] = useState('');
+  const [editShop, setEditShop] = useState(null);
   useLockBodyScroll(showModal);
 
   async function load() {
@@ -55,13 +58,13 @@ export default function AdminShopsPage() {
         </div>
 
         {loading ? (
-          <p className="empty-state">กำลังโหลด...</p>
+          <Loader />
         ) : visible.length === 0 ? (
           <p className="empty-state">ไม่พบร้าน</p>
         ) : (
           <div className="shop-list-panel">
             {visible.map((shop) => (
-              <div className="shop-row" key={shop.id} style={{ cursor: 'default' }}>
+              <div className="shop-row" key={shop.id} onClick={() => setEditShop(shop)}>
                 <div>
                   <div className="shop-row-name">{shop.name}</div>
                   {shop.pendingBillTotal > 0 && (
@@ -107,6 +110,22 @@ export default function AdminShopsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {editShop && (
+        <EditShopSheet
+          shop={editShop}
+          api={adminApi}
+          onClose={() => setEditShop(null)}
+          onSaved={() => {
+            setEditShop(null);
+            load();
+          }}
+          onDeleted={() => {
+            setEditShop(null);
+            load();
+          }}
+        />
       )}
     </div>
   );

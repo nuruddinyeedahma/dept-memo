@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminApi as api } from '../adminApi.js';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
+import Loader from './Loader.jsx';
 
 export default function ShopItemsBulkSheet({ shopId, shopName, onClose, onSaved }) {
   useLockBodyScroll();
@@ -75,7 +76,7 @@ export default function ShopItemsBulkSheet({ shopId, shopName, onClose, onSaved 
         </div>
 
         {items === null ? (
-          <p className="empty-state">กำลังโหลด...</p>
+          <Loader />
         ) : (
           <>
             <div className="pay-section-header">

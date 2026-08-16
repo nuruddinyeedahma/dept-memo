@@ -16,9 +16,41 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Trirong:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* Critical CSS: paints before the external stylesheet arrives, so the very
+         first frame is already cream, never a dark/unstyled flash. */
+      html, body { background: #F7F2E7; margin: 0; }
+      #root { min-height: 100vh; }
+      .boot-loader {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'IBM Plex Sans Thai', sans-serif;
+        color: #9A8C74;
+        font-size: 14px;
+      }
+      .boot-loader .dot {
+        width: 8px;
+        height: 8px;
+        margin: 0 3px;
+        border-radius: 50%;
+        background: #C9B892;
+        display: inline-block;
+        animation: boot-pulse 1s ease-in-out infinite;
+      }
+      .boot-loader .dot:nth-child(2) { animation-delay: .15s; }
+      .boot-loader .dot:nth-child(3) { animation-delay: .3s; }
+      @keyframes boot-pulse {
+        0%, 80%, 100% { opacity: .3; transform: scale(.85); }
+        40% { opacity: 1; transform: scale(1); }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -7,6 +7,7 @@ import PricesTab from '../components/PricesTab.jsx';
 import HistoryTab from '../components/HistoryTab.jsx';
 import EditShopSheet from '../components/EditShopSheet.jsx';
 import PaymentSheet from '../components/PaymentSheet.jsx';
+import Loader from '../components/Loader.jsx';
 
 const TABS = [
   { key: 'record', label: 'บันทึกหนี้' },
@@ -18,6 +19,7 @@ export default function ShopDetail() {
   const { id } = useParams();
   const shopId = id;
   const [shop, setShop] = useState(null);
+  const [recordSeed, setRecordSeed] = useState(null);
   const [tab, setTab] = useState('record');
   const [showEdit, setShowEdit] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
@@ -32,7 +34,14 @@ export default function ShopDetail() {
   }
 
   useEffect(() => {
+    setRecordSeed(null);
     loadShop();
+    // Fire the default (record) tab's data alongside the shop fetch instead of
+    // waiting for it to resolve first - turns a fetch-then-fetch waterfall into
+    // one round trip.
+    Promise.all([api.getShopPrices(shopId), api.getOpenBill(shopId)])
+      .then(([prices, bill]) => setRecordSeed({ prices, bill }))
+      .catch(() => {});
   }, [shopId]);
 
   if (!shop) {
@@ -45,9 +54,7 @@ export default function ShopDetail() {
             </button>
           </div>
         </div>
-        <p className="empty-state" style={{ padding: 20 }}>
-          กำลังโหลด...
-        </p>
+        <Loader />
       </div>
     );
   }
@@ -88,7 +95,9 @@ export default function ShopDetail() {
         </div>
       </div>
 
-      {tab === 'record' && <RecordDebtTab shopId={shopId} />}
+      {tab === 'record' && (
+        <RecordDebtTab shopId={shopId} initialPrices={recordSeed?.prices} initialBill={recordSeed?.bill} />
+      )}
       {tab === 'prices' && <PricesTab shopId={shopId} />}
       {tab === 'history' && <HistoryTab shopId={shopId} />}
 

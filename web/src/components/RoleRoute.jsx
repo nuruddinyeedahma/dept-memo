@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import Loader from './Loader.jsx';
 
 export function roleHome(role) {
   if (role === 'admin') return '/admin';
@@ -12,9 +13,7 @@ export default function RoleRoute({ roles, children }) {
   if (loading) {
     return (
       <div className="app">
-        <p className="empty-state" style={{ padding: 20 }}>
-          กำลังโหลด...
-        </p>
+        <Loader />
       </div>
     );
   }

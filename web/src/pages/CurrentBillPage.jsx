@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { formatMoney } from '../lib/format.js';
 import PaymentSheet from '../components/PaymentSheet.jsx';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
+import Loader from '../components/Loader.jsx';
 
 export default function CurrentBillPage() {
   const { id } = useParams();
@@ -64,7 +65,7 @@ export default function CurrentBillPage() {
   }
 
   if (!shop || !bill) {
-    return <p className="empty-state" style={{ padding: 20 }}>กำลังโหลด...</p>;
+    return <div className="app"><Loader /></div>;
   }
 
   const grandTotal = shop.outstandingDebt + bill.total;
