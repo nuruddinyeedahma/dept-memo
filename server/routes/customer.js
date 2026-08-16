@@ -6,6 +6,7 @@ import Payment from '../models/Payment.js';
 import { requireAuth, requireRole } from '../lib/auth.js';
 import {
   outstandingDebtOf,
+  pendingBillTotalOf,
   getShopPrices,
   effectivePriceOf,
   getOrCreateOpenBill,
@@ -30,6 +31,15 @@ router.get('/shops', async (req, res) => {
       ...summaryFor(shop._id, maps),
     }))
   );
+});
+
+router.get('/shops/:shopId', async (req, res) => {
+  const shop = await getShopById(req.params.shopId);
+  const [outstandingDebt, pendingBillTotal] = await Promise.all([
+    outstandingDebtOf(shop._id),
+    pendingBillTotalOf(shop._id),
+  ]);
+  res.json({ id: shop._id, name: shop.name, phone: shop.phone, note: shop.note, outstandingDebt, pendingBillTotal });
 });
 
 function toShopDto(shop) {

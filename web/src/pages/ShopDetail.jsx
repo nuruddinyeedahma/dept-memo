@@ -24,8 +24,11 @@ export default function ShopDetail() {
   const navigate = useNavigate();
 
   async function loadShop() {
-    const shops = await api.getShops();
-    setShop(shops.find((s) => s.id === shopId) ?? null);
+    try {
+      setShop(await api.getShop(shopId));
+    } catch {
+      setShop(null);
+    }
   }
 
   useEffect(() => {

@@ -4,6 +4,7 @@ const base = '/api/customer';
 
 export const api = {
   getShops: () => http.get(`${base}/shops`),
+  getShop: (id) => http.get(`${base}/shops/${id}`),
   createShop: (name) => http.post(`${base}/shops`, { name }),
   updateShop: (id, patch) => http.patch(`${base}/shops/${id}`, patch),
   deleteShop: (id) => http.delete(`${base}/shops/${id}`),

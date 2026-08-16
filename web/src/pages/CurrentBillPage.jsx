@@ -18,8 +18,8 @@ export default function CurrentBillPage() {
   useLockBodyScroll(confirmClearCart);
 
   async function load() {
-    const [shops, openBill] = await Promise.all([api.getShops(), api.getOpenBill(shopId)]);
-    setShop(shops.find((s) => s.id === shopId) ?? null);
+    const [shopData, openBill] = await Promise.all([api.getShop(shopId), api.getOpenBill(shopId)]);
+    setShop(shopData);
     setBill(openBill);
   }
 
