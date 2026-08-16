@@ -85,7 +85,12 @@ export default function ShopHistoryPage() {
                   <div>
                     <div className="history-entry-title">
                       {sale.items.length} รายการ
-                      {sale.customerOwed > 0 && <span className="unpaid-badge">ค้าง {formatMoney(sale.customerOwed)}</span>}
+                      {sale.customerOwed > 0 &&
+                        (sale.paymentId ? (
+                          <span className="paid-badge">ชำระแล้ว</span>
+                        ) : (
+                          <span className="unpaid-badge">ค้าง {formatMoney(sale.customerOwed)}</span>
+                        ))}
                     </div>
                     <div className="history-entry-date">
                       {formatDateTimeThai(sale.createdAt)}

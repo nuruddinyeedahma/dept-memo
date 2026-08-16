@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import Item from '../models/Item.js';
 import ShopSale from '../models/ShopSale.js';
+import ShopDebtPayment from '../models/ShopDebtPayment.js';
 import { requireAuth, requireRole } from '../lib/auth.js';
 
 const router = Router();
@@ -172,8 +173,93 @@ router.get('/summary', async (req, res) => {
     saleCount: sales.length,
     totalSales: sales.reduce((s, x) => s + x.total, 0),
     totalReceived: sales.reduce((s, x) => s + x.amountReceived, 0),
-    totalCustomerOwed: sales.reduce((s, x) => s + x.customerOwed, 0),
+    totalCustomerOwed: sales.reduce((s, x) => s + (x.paymentId ? 0 : x.customerOwed), 0),
   });
+});
+
+// Debt owed by customers of THIS shop's sales (customerOwed on ShopSale), grouped
+// by the free-text customerName typed at sale time - there's no real customer
+// entity here, the name string is the only handle we have to group by.
+router.get('/debts', async (req, res) => {
+  const shopId = myShopId(req, res);
+  if (!shopId) return;
+  const unpaid = await ShopSale.find({ shopId, customerOwed: { $gt: 0 }, paymentId: null, customerName: { $ne: null } });
+  const byName = new Map();
+  for (const s of unpaid) {
+    const entry = byName.get(s.customerName) ?? { customerName: s.customerName, totalOwed: 0, saleCount: 0, lastAt: null };
+    entry.totalOwed += s.customerOwed;
+    entry.saleCount += 1;
+    if (!entry.lastAt || s.createdAt > entry.lastAt) entry.lastAt = s.createdAt;
+    byName.set(s.customerName, entry);
+  }
+  res.json([...byName.values()].sort((a, b) => b.totalOwed - a.totalOwed));
+});
+
+router.get('/debts/:customerName', async (req, res) => {
+  const shopId = myShopId(req, res);
+  if (!shopId) return;
+  const name = decodeURIComponent(req.params.customerName);
+
+  const unpaidSales = await ShopSale.find({ shopId, customerName: name, customerOwed: { $gt: 0 }, paymentId: null }).sort({
+    createdAt: 1,
+  });
+  const payments = await ShopDebtPayment.find({ shopId, customerName: name }).sort({ paidAt: -1 });
+  const payments2 = [];
+  for (const p of payments) {
+    const sales = await ShopSale.find({ _id: { $in: p.saleIds } }).sort({ createdAt: 1 });
+    payments2.push({
+      id: p._id,
+      paidAt: p.paidAt,
+      amount: p.amount,
+      note: p.note,
+      sales: sales.map((s) => ({ id: s._id, createdAt: s.createdAt, customerOwed: s.customerOwed, itemCount: s.items.length })),
+    });
+  }
+
+  res.json({
+    customerName: name,
+    unpaidSales: unpaidSales.map((s) => ({
+      id: s._id,
+      createdAt: s.createdAt,
+      total: s.total,
+      amountReceived: s.amountReceived,
+      customerOwed: s.customerOwed,
+      itemCount: s.items.length,
+    })),
+    payments: payments2,
+  });
+});
+
+router.post('/debts/payments', async (req, res) => {
+  const shopId = myShopId(req, res);
+  if (!shopId) return;
+  const { customerName, saleIds, note } = req.body ?? {};
+  const name = customerName?.trim();
+  if (!name) return res.status(400).json({ error: 'customerName is required' });
+  const ids = Array.isArray(saleIds) ? [...new Set(saleIds)] : [];
+  if (ids.length === 0) return res.status(400).json({ error: 'saleIds must be a non-empty array' });
+
+  const sales = await ShopSale.find({ _id: { $in: ids } });
+  if (sales.length !== ids.length) return res.status(400).json({ error: 'some sales not found' });
+  const invalid = sales.some(
+    (s) => String(s.shopId) !== String(shopId) || s.customerName !== name || s.customerOwed <= 0 || s.paymentId !== null
+  );
+  if (invalid) return res.status(400).json({ error: 'all sales must belong to this shop and customer, and be unpaid' });
+
+  const amount = sales.reduce((s, x) => s + x.customerOwed, 0);
+  const payment = await ShopDebtPayment.create({ shopId, customerName: name, saleIds: ids, amount, note: note?.trim() || null });
+  await ShopSale.updateMany({ _id: { $in: ids } }, { $set: { paymentId: payment._id } });
+  res.json({ payment });
+});
+
+router.delete('/debts/payments/:id', async (req, res) => {
+  const shopId = myShopId(req, res);
+  if (!shopId) return;
+  const payment = await ShopDebtPayment.findOne({ _id: req.params.id, shopId });
+  if (!payment) return res.status(404).json({ error: 'payment not found' });
+  await ShopSale.updateMany({ paymentId: payment._id }, { $set: { paymentId: null } });
+  await ShopDebtPayment.deleteOne({ _id: payment._id });
+  res.json({ ok: true });
 });
 
 export default router;

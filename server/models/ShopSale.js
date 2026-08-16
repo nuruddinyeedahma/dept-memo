@@ -21,6 +21,7 @@ const shopSaleSchema = new mongoose.Schema({
   change: { type: Number, required: true },
   customerOwed: { type: Number, default: 0 },
   customerName: { type: String, default: null },
+  paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'ShopDebtPayment', default: null },
   note: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
 });

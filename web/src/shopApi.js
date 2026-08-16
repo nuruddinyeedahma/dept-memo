@@ -10,4 +10,9 @@ export const shopApi = {
   createSale: (sale) => http.post(`${base}/sales`, sale),
   getSales: (month) => http.get(`${base}/sales${month ? `?month=${month}` : ''}`),
   getSummary: (month) => http.get(`${base}/summary${month ? `?month=${month}` : ''}`),
+
+  getDebts: () => http.get(`${base}/debts`),
+  getCustomerDebt: (customerName) => http.get(`${base}/debts/${encodeURIComponent(customerName)}`),
+  payDebts: (customerName, saleIds, note) => http.post(`${base}/debts/payments`, { customerName, saleIds, note }),
+  undoDebtPayment: (paymentId) => http.delete(`${base}/debts/payments/${paymentId}`),
 };

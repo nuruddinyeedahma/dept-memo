@@ -41,6 +41,15 @@ export default function ShopHomePage() {
           </span>
           <span className="menu-card-arrow">›</span>
         </button>
+
+        <button className="menu-card" onClick={() => navigate('/shop/debts')}>
+          <span className="menu-card-icon">✓</span>
+          <span className="menu-card-body">
+            <span className="menu-card-title">รับชำระหนี้</span>
+            <span className="menu-card-sub">ปิดยอดค้างของลูกค้าที่มาจ่ายทีหลัง</span>
+          </span>
+          <span className="menu-card-arrow">›</span>
+        </button>
       </div>
     </div>
   );
