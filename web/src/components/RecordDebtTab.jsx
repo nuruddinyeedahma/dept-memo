@@ -200,7 +200,7 @@ export default function RecordDebtTab({ shopId, initialPrices, initialBill }) {
               <input
                 className="field-input"
                 type="number"
-                placeholder="ราคากลาง"
+                placeholder="ราคาของร้านนี้"
                 value={newItem.price}
                 onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
               />

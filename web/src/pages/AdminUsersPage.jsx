@@ -14,7 +14,10 @@ export default function AdminUsersPage() {
   const [form, setForm] = useState({ username: '', password: '', role: 'customer', shopId: '', displayName: '' });
   const [error, setError] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  useLockBodyScroll(showAdd || !!confirmDeleteId);
+  const [editUser, setEditUser] = useState(null);
+  const [editForm, setEditForm] = useState({ displayName: '', shopId: '' });
+  const [editError, setEditError] = useState('');
+  useLockBodyScroll(showAdd || !!confirmDeleteId || !!editUser);
 
   async function load() {
     setLoading(true);
@@ -64,6 +67,31 @@ export default function AdminUsersPage() {
     load();
   }
 
+  function openEdit(u) {
+    setEditUser(u);
+    setEditForm({ displayName: u.displayName ?? '', shopId: u.shopId ?? '' });
+    setEditError('');
+  }
+
+  async function handleEditSave(e) {
+    e.preventDefault();
+    setEditError('');
+    if (editUser.role === 'shop' && !editForm.shopId) {
+      setEditError('ผู้ใช้บทบาทร้านค้าต้องเลือกร้าน');
+      return;
+    }
+    try {
+      await adminApi.updateUser(editUser.id, {
+        displayName: editForm.displayName.trim(),
+        shopId: editUser.role === 'shop' ? editForm.shopId : undefined,
+      });
+      setEditUser(null);
+      load();
+    } catch (err) {
+      setEditError(err.message);
+    }
+  }
+
   function shopName(shopId) {
     return shops.find((s) => s.id === shopId)?.name ?? '-';
   }
@@ -80,15 +108,22 @@ export default function AdminUsersPage() {
         ) : (
           <div className="price-panel">
             {users.map((u) => (
-              <div className="price-row" key={u.id}>
+              <div className="price-row" key={u.id} style={{ cursor: 'pointer' }} onClick={() => openEdit(u)}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="price-row-name">{u.username}</div>
                   <div className="price-row-default tabular">
                     {ROLE_LABEL[u.role]}
+                    {u.displayName ? ` · ${u.displayName}` : ''}
                     {u.role === 'shop' ? ` · ${shopName(u.shopId)}` : ''}
                   </div>
                 </div>
-                <button className="btn-danger-text" onClick={() => setConfirmDeleteId(u.id)}>
+                <button
+                  className="btn-danger-text"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDeleteId(u.id);
+                  }}
+                >
                   ลบ
                 </button>
               </div>
@@ -161,6 +196,45 @@ export default function AdminUsersPage() {
                 </button>
                 <button type="submit" className="btn btn-dark">
                   เพิ่ม
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editUser && (
+        <div className="modal-backdrop" onClick={() => setEditUser(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="serif">แก้ไข {editUser.username}</h2>
+            <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                className="field-input"
+                placeholder="ชื่อที่แสดง"
+                value={editForm.displayName}
+                onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+              />
+              {editUser.role === 'shop' && (
+                <div className="chip-row">
+                  {shops.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={`chip ${editForm.shopId === s.id ? 'active' : ''}`}
+                      onClick={() => setEditForm({ ...editForm, shopId: s.id })}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {editError && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{editError}</p>}
+              <div className="modal-actions">
+                <button type="button" className="btn btn-outline-gold" onClick={() => setEditUser(null)}>
+                  ยกเลิก
+                </button>
+                <button type="submit" className="btn btn-dark">
+                  บันทึก
                 </button>
               </div>
             </form>

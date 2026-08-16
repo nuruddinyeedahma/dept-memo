@@ -108,21 +108,25 @@ router.get('/shops/:shopId/prices', async (req, res) => {
 });
 
 router.post('/items', async (req, res) => {
-  const { name, defaultPrice, category, shopId } = req.body ?? {};
+  const { name, price: rawPrice, category, shopId } = req.body ?? {};
   const trimmed = name?.trim();
-  const price = Number(defaultPrice);
+  const price = Number(rawPrice);
   if (!trimmed || !Number.isFinite(price) || price < 0) {
-    return res.status(400).json({ error: 'name and defaultPrice are required' });
+    return res.status(400).json({ error: 'name and price are required' });
   }
+  if (!shopId) return res.status(400).json({ error: 'shopId is required' });
   const existing = await Item.findOne({ name: trimmed });
   if (existing) return res.status(400).json({ error: 'item name already exists' });
+  // Only the admin sets the central/default price - an item added here is scoped
+  // to this shop, with the typed price stored as this shop's override only.
   const item = await Item.create({
     name: trimmed,
-    defaultPrice: price,
+    defaultPrice: 0,
     category: category?.trim() || null,
-    shopIds: shopId ? [shopId] : [],
+    shopIds: [shopId],
+    priceOverrides: [{ shopId, price }],
   });
-  res.json({ id: item._id, name: item.name, defaultPrice: item.defaultPrice, category: item.category });
+  res.json({ id: item._id, name: item.name, price, category: item.category });
 });
 
 router.put('/shops/:shopId/prices/:itemId', async (req, res) => {

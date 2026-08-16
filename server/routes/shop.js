@@ -35,6 +35,29 @@ router.get('/items', async (req, res) => {
   );
 });
 
+router.post('/items', async (req, res) => {
+  const shopId = myShopId(req, res);
+  if (!shopId) return;
+  const { name, price: rawPrice, category } = req.body ?? {};
+  const trimmed = name?.trim();
+  const price = Number(rawPrice);
+  if (!trimmed || !Number.isFinite(price) || price < 0) {
+    return res.status(400).json({ error: 'name and price are required' });
+  }
+  const existing = await Item.findOne({ name: trimmed });
+  if (existing) return res.status(400).json({ error: 'item name already exists' });
+  // Only the admin sets the central/default price - an item added here is scoped
+  // to this shop, with the typed price stored as this shop's override only.
+  const item = await Item.create({
+    name: trimmed,
+    defaultPrice: 0,
+    category: category?.trim() || null,
+    shopIds: [shopId],
+    priceOverrides: [{ shopId, price }],
+  });
+  res.json({ id: item._id, name: item.name, price, category: item.category });
+});
+
 router.post('/sales', async (req, res) => {
   const shopId = myShopId(req, res);
   if (!shopId) return;

@@ -1,9 +1,22 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import Shop from '../models/Shop.js';
 import { signToken, setAuthCookie, clearAuthCookie, requireAuth } from '../lib/auth.js';
 
 const router = Router();
+
+async function toUserDto(user) {
+  const shop = user.shopId ? await Shop.findById(user.shopId).select('name') : null;
+  return {
+    id: user._id,
+    username: user.username,
+    role: user.role,
+    shopId: user.shopId,
+    displayName: user.displayName,
+    shopName: shop?.name ?? null,
+  };
+}
 
 router.post('/login', async (req, res) => {
   const { username, password, rememberMe } = req.body ?? {};
@@ -17,13 +30,7 @@ router.post('/login', async (req, res) => {
 
   const { token, maxAge } = signToken(user, !!rememberMe);
   setAuthCookie(res, token, maxAge);
-  res.json({
-    id: user._id,
-    username: user.username,
-    role: user.role,
-    shopId: user.shopId,
-    displayName: user.displayName,
-  });
+  res.json(await toUserDto(user));
 });
 
 router.post('/logout', (req, res) => {
@@ -34,7 +41,7 @@ router.post('/logout', (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   const user = await User.findById(req.user.id);
   if (!user) return res.status(401).json({ error: 'not authenticated' });
-  res.json({ id: user._id, username: user.username, role: user.role, shopId: user.shopId, displayName: user.displayName });
+  res.json(await toUserDto(user));
 });
 
 export default router;

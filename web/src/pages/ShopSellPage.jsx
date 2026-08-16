@@ -1,8 +1,36 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { shopApi } from '../shopApi.js';
 import { formatMoney } from '../lib/format.js';
 import Loader from '../components/Loader.jsx';
+
+// Short two-tone door-chime, synthesized (no audio file to ship/copy).
+function playChime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const tones = [
+      { freq: 880, start: 0, dur: 0.16 },
+      { freq: 659, start: 0.14, dur: 0.28 },
+    ];
+    for (const t of tones) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = t.freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + t.start);
+      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + t.start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t.start + t.dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + t.start);
+      osc.stop(ctx.currentTime + t.start + t.dur + 0.02);
+    }
+    setTimeout(() => ctx.close(), 600);
+  } catch {
+    // Web Audio unavailable - silently skip, sound is a nice-to-have.
+  }
+}
 
 export default function ShopSellPage() {
   const navigate = useNavigate();
@@ -15,10 +43,18 @@ export default function ShopSellPage() {
   const [saved, setSaved] = useState(false);
   const [activeChip, setActiveChip] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [showAddItem, setShowAddItem] = useState(false);
+  const [newItem, setNewItem] = useState({ name: '', price: '', category: '' });
+  const [addItemError, setAddItemError] = useState('');
+  const checkoutRef = useRef(null);
+
+  function loadItems() {
+    setLoading(true);
+    return shopApi.getItems().then(setItems).finally(() => setLoading(false));
+  }
 
   useEffect(() => {
-    setLoading(true);
-    shopApi.getItems().then(setItems).finally(() => setLoading(false));
+    loadItems();
   }, []);
 
   const categories = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))], [items]);
@@ -42,6 +78,7 @@ export default function ShopSellPage() {
   }
 
   const cartEntries = useMemo(() => [...cart.values()], [cart]);
+  const cartQty = useMemo(() => cartEntries.reduce((s, e) => s + e.quantity, 0), [cartEntries]);
   const total = useMemo(() => cartEntries.reduce((s, e) => s + e.unitPrice * e.quantity, 0), [cartEntries]);
   const received = Number(amountReceived) || 0;
   const change = Math.max(0, received - total);
@@ -59,10 +96,30 @@ export default function ShopSellPage() {
       setCart(new Map());
       setAmountReceived('');
       setSaved(true);
+      playChime();
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleAddItem(e) {
+    e.preventDefault();
+    setAddItemError('');
+    const name = newItem.name.trim();
+    const price = Number(newItem.price);
+    if (!name || !Number.isFinite(price) || price < 0) {
+      setAddItemError('กรอกชื่อและราคาที่ถูกต้อง');
+      return;
+    }
+    try {
+      await shopApi.createItem(name, price, newItem.category.trim() || undefined);
+      setNewItem({ name: '', price: '', category: '' });
+      setShowAddItem(false);
+      loadItems();
+    } catch (err) {
+      setAddItemError(err.message);
     }
   }
 
@@ -103,36 +160,41 @@ export default function ShopSellPage() {
             </div>
 
             <div className="item-grid">
-            {visibleItems.map((item) => {
-              const qty = cart.get(item.id)?.quantity ?? 0;
-              return (
-                <div key={item.id} className={`item-tile ${qty > 0 ? 'active' : ''}`}>
-                  {qty > 0 && <div className="tile-badge">{qty}</div>}
-                  <div className="tile-name">{item.name}</div>
-                  <div className="tile-price tabular">{item.price} บาท</div>
-                  {qty > 0 ? (
-                    <div className="tile-stepper">
-                      <button className="minus" onClick={() => changeQty(item, -1)}>
-                        −
-                      </button>
-                      <span className="qty tabular">{qty}</span>
-                      <button className="plus" onClick={() => changeQty(item, 1)}>
+              {visibleItems.map((item) => {
+                const qty = cart.get(item.id)?.quantity ?? 0;
+                return (
+                  <div key={item.id} className={`item-tile ${qty > 0 ? 'active' : ''}`}>
+                    {qty > 0 && <div className="tile-badge">{qty}</div>}
+                    <div className="tile-name">{item.name}</div>
+                    <div className="tile-price tabular">{item.price} บาท</div>
+                    {qty > 0 ? (
+                      <div className="tile-stepper">
+                        <button className="minus" onClick={() => changeQty(item, -1)}>
+                          −
+                        </button>
+                        <span className="qty tabular">{qty}</span>
+                        <button className="plus" onClick={() => changeQty(item, 1)}>
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <button className="add-tile" onClick={() => changeQty(item, 1)}>
                         +
                       </button>
-                    </div>
-                  ) : (
-                    <button className="add-tile" onClick={() => changeQty(item, 1)}>
-                      +
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                    )}
+                  </div>
+                );
+              })}
+              <button className="add-item-tile" onClick={() => setShowAddItem(true)}>
+                <span style={{ fontSize: 20 }}>+</span>
+                <span style={{ fontSize: 12, fontWeight: 600 }}>สินค้าใหม่</span>
+              </button>
             </div>
+            {cartEntries.length > 0 && <div style={{ height: 'calc(80px + env(safe-area-inset-bottom))' }} />}
           </>
         )}
 
-        <div className="totals-box">
+        <div ref={checkoutRef} className="totals-box">
           <div className="totals-row grand">
             <span className="label">ยอดรวม</span>
             <span className="value tabular">{formatMoney(total)} บาท</span>
@@ -169,6 +231,70 @@ export default function ShopSellPage() {
           บันทึกการขาย
         </button>
       </div>
+
+      {cartEntries.length > 0 && (
+        <div className="cart-bar">
+          <div>
+            <div className="cart-label">ยอดขาย · {cartQty} ชิ้น</div>
+            <div className="cart-amount tabular">{formatMoney(total)} บาท</div>
+          </div>
+          <button className="cart-btn" onClick={() => checkoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+            คิดเงิน<span>›</span>
+          </button>
+        </div>
+      )}
+
+      {showAddItem && (
+        <div className="modal-backdrop" onClick={() => setShowAddItem(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="serif">เพิ่มสินค้าใหม่</h2>
+            <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                className="field-input"
+                placeholder="ชื่อสินค้า"
+                value={newItem.name}
+                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              />
+              <input
+                className="field-input"
+                type="number"
+                placeholder="ราคาของร้านนี้"
+                value={newItem.price}
+                onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+              />
+              <input
+                className="field-input"
+                placeholder="หมวดหมู่ (ไม่บังคับ)"
+                value={newItem.category}
+                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+              />
+              {categories.length > 0 && (
+                <div className="chip-row">
+                  {categories.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`chip ${newItem.category === c ? 'active' : ''}`}
+                      onClick={() => setNewItem({ ...newItem, category: c })}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {addItemError && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{addItemError}</p>}
+              <div className="modal-actions">
+                <button type="button" className="btn btn-outline-gold" onClick={() => setShowAddItem(false)}>
+                  ยกเลิก
+                </button>
+                <button type="submit" className="btn btn-dark">
+                  เพิ่มสินค้า
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

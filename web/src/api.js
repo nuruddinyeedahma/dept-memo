@@ -11,8 +11,7 @@ export const api = {
 
   getSummary: () => http.get(`${base}/summary`),
 
-  createItem: (name, defaultPrice, category, shopId) =>
-    http.post(`${base}/items`, { name, defaultPrice, category, shopId }),
+  createItem: (name, price, category, shopId) => http.post(`${base}/items`, { name, price, category, shopId }),
 
   getShopPrices: (shopId) => http.get(`${base}/shops/${shopId}/prices`),
   setShopPrice: (shopId, itemId, price) => http.put(`${base}/shops/${shopId}/prices/${itemId}`, { price }),

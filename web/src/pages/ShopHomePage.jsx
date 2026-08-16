@@ -8,7 +8,7 @@ export default function ShopHomePage() {
   return (
     <div className="app">
       <div className="light-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="shop-title">{user?.displayName || 'ร้านค้า'}</div>
+        <div className="shop-title">{user?.shopName || user?.displayName || 'ร้านค้า'}</div>
         <button className="btn-danger-text" onClick={logout}>
           ออกจากระบบ
         </button>
