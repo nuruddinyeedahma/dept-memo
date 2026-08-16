@@ -30,7 +30,6 @@ export default function ShopSellPage() {
   const [cart, setCart] = useState(new Map());
   const [amountReceived, setAmountReceived] = useState('');
   const [customerName, setCustomerName] = useState('');
-  const [nameError, setNameError] = useState(false);
   const [showChangeOverride, setShowChangeOverride] = useState(false);
   const [changeOverrideValue, setChangeOverrideValue] = useState('');
   const [error, setError] = useState('');
@@ -49,7 +48,6 @@ export default function ShopSellPage() {
   const [addItemError, setAddItemError] = useState('');
   const [checkoutVisible, setCheckoutVisible] = useState(false);
   const checkoutRef = useRef(null);
-  const customerNameRef = useRef(null);
   useLockBodyScroll(showCustomerPicker || showAddItem);
 
   function loadItems() {
@@ -151,9 +149,7 @@ export default function ShopSellPage() {
     }
     if (needsName && !customerName.trim()) {
       setError('ลูกค้ายังไม่จ่ายครบหรือมีการปรับเงินทอน กรุณาใส่ชื่อลูกค้า');
-      setNameError(true);
-      customerNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      customerNameRef.current?.focus();
+      setShowCustomerPicker(true);
       return;
     }
     setBusy(true);
