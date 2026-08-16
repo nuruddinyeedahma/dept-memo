@@ -124,13 +124,20 @@ export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged 
             {payments.length > 0 && (
               <div className="pay-section">
                 <div className="pay-section-header">
-                  <span>ชำระแล้ว</span>
+                  <span>ประวัติ</span>
                 </div>
                 {payments.map((group) => (
                   <div className="paid-group-card" key={group.id}>
                     <div className="paid-group-top">
                       <div>
-                        <div className="paid-group-date">{formatDateTimeThai(group.paidAt)}</div>
+                        <div className="paid-group-date">
+                          {formatDateTimeThai(group.paidAt)}
+                          {group.kind === 'rollup' && (
+                            <span className="override-badge" style={{ marginLeft: 6 }}>
+                              ยอดย้ายไปบิลใหม่
+                            </span>
+                          )}
+                        </div>
                         <div className="paid-group-sub">{group.sales.length} รายการขาย</div>
                       </div>
                       <div className="paid-group-amount tabular">{formatMoney(group.amount)}</div>
@@ -164,7 +171,7 @@ export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged 
                       </div>
                     ) : (
                       <button className="btn-danger-text" onClick={() => setConfirmUndoId(group.id)}>
-                        ยกเลิกการชำระนี้
+                        {group.kind === 'rollup' ? 'แยกยอดนี้กลับคืน' : 'ยกเลิกการชำระนี้'}
                       </button>
                     )}
                   </div>

@@ -154,6 +154,7 @@ router.post('/sales', async (req, res) => {
       customerName: nameTrimmed,
       saleIds: oldUnpaidSales.map((s) => s._id),
       amount: oldOwedSum,
+      kind: 'rollup',
       note: 'รวมยอดเข้ากับรายการขายใหม่',
     });
     await ShopSale.updateMany({ _id: { $in: oldUnpaidSales.map((s) => s._id) } }, { $set: { paymentId: rollup._id } });
@@ -176,16 +177,31 @@ function monthRange(monthParam) {
   return { year, month0, start: new Date(year, month0, 1), end: new Date(year, month0 + 1, 1) };
 }
 
+// Attaches paymentKind ('payment' vs 'rollup') to each sale so the UI can tell
+// "actually settled" apart from "balance just rolled into a newer sale" -
+// both set ShopSale.paymentId identically, but only one means money changed hands.
+async function withPaymentKind(sales) {
+  const paymentIds = sales.map((s) => s.paymentId).filter(Boolean);
+  if (paymentIds.length === 0) return sales.map((s) => s.toObject());
+  const payments = await ShopDebtPayment.find({ _id: { $in: paymentIds } }).select('kind');
+  const kindById = new Map(payments.map((p) => [String(p._id), p.kind]));
+  return sales.map((s) => {
+    const obj = s.toObject();
+    if (s.paymentId) obj.paymentKind = kindById.get(String(s.paymentId)) ?? 'payment';
+    return obj;
+  });
+}
+
 router.get('/sales', async (req, res) => {
   const shopId = myShopId(req, res);
   if (!shopId) return;
   if (req.query.month) {
     const { start, end } = monthRange(req.query.month);
     const sales = await ShopSale.find({ shopId, createdAt: { $gte: start, $lt: end } }).sort({ createdAt: -1 });
-    return res.json(sales);
+    return res.json(await withPaymentKind(sales));
   }
   const sales = await ShopSale.find({ shopId }).sort({ createdAt: -1 }).limit(200);
-  res.json(sales);
+  res.json(await withPaymentKind(sales));
 });
 
 router.get('/summary', async (req, res) => {
@@ -237,6 +253,7 @@ router.get('/debts/:customerName', async (req, res) => {
       paidAt: p.paidAt,
       amount: p.amount,
       note: p.note,
+      kind: p.kind,
       sales: sales.map((s) => ({ id: s._id, createdAt: s.createdAt, customerOwed: s.customerOwed, itemCount: s.items.length })),
     });
   }

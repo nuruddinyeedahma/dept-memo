@@ -86,10 +86,14 @@ export default function ShopHistoryPage() {
                     <div className="history-entry-title">
                       {sale.items.length} รายการ
                       {sale.customerOwed > 0 &&
-                        (sale.paymentId ? (
-                          <span className="paid-badge">ชำระแล้ว</span>
-                        ) : (
+                        (!sale.paymentId ? (
                           <span className="unpaid-badge">ค้าง {formatMoney(sale.customerOwed)}</span>
+                        ) : sale.paymentKind === 'rollup' ? (
+                          <span className="override-badge" style={{ marginLeft: 6 }}>
+                            ยอดย้ายไปบิลใหม่
+                          </span>
+                        ) : (
+                          <span className="paid-badge">ชำระแล้ว</span>
                         ))}
                     </div>
                     <div className="history-entry-date">
