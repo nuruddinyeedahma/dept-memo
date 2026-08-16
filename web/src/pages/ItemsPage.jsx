@@ -19,6 +19,7 @@ export default function ItemsPage() {
   const [loading, setLoading] = useState(true);
   const [bulkShop, setBulkShop] = useState(null);
   const [showShopPicker, setShowShopPicker] = useState(false);
+  const [showFabMenu, setShowFabMenu] = useState(false);
   useLockBodyScroll(showAdd || showShopPicker);
 
   async function load() {
@@ -90,7 +91,7 @@ export default function ItemsPage() {
         ) : visible.length === 0 ? (
           <p className="empty-state">ไม่พบสินค้า</p>
         ) : (
-          <div className="price-panel">
+          <div className="price-panel" style={{ paddingBottom: 110 }}>
             {visible.map((item) => (
               <button
                 key={item.id}
@@ -109,20 +110,42 @@ export default function ItemsPage() {
             ))}
           </div>
         )}
-
-        <button className="btn btn-outline-gold" onClick={() => setShowAdd(true)}>
-          + เพิ่มสินค้าใหม่
-        </button>
-        <button className="btn btn-outline-gold" onClick={() => setShowShopPicker(true)}>
-          เลือกสินค้าหลายรายการ
-        </button>
-        <button className="btn btn-outline-gold" onClick={() => navigate('/admin/items/categories')}>
-          จัดการหมวดหมู่แบบ bulk
-        </button>
       </div>
 
       <div style={{ flex: 1 }} />
       <AdminNav />
+
+      {showFabMenu && (
+        <>
+          <div className="fab-menu-backdrop" onClick={() => setShowFabMenu(false)} />
+          <button
+            className="fab fab-menu-item"
+            style={{ bottom: 274 }}
+            onClick={() => {
+              setShowFabMenu(false);
+              navigate('/admin/items/categories');
+            }}
+          >
+            จัดการหมวดหมู่หลายรายการ
+          </button>
+          <button
+            className="fab fab-menu-item"
+            style={{ bottom: 214 }}
+            onClick={() => {
+              setShowFabMenu(false);
+              setShowShopPicker(true);
+            }}
+          >
+            เลือกเข้าร้านหลายรายการ
+          </button>
+        </>
+      )}
+      <button className="fab fab-mini" onClick={() => setShowFabMenu((v) => !v)}>
+        ⋯
+      </button>
+      <button className="fab" onClick={() => setShowAdd(true)}>
+        <span style={{ fontSize: 18, lineHeight: 1 }}>+</span>เพิ่มสินค้าใหม่
+      </button>
 
       {editItem && (
         <ItemSheet
