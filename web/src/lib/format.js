@@ -36,6 +36,12 @@ export function formatDateTimeThai(iso) {
   return `${d.getDate()} ${THAI_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear() + 543} · ${hh}:${mm}`;
 }
 
+export function formatDateThai(iso) {
+  const d = toDate(iso);
+  if (!d) return 'นำเข้าจากข้อมูลเก่า';
+  return `${d.getDate()} ${THAI_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+
 export function formatThaiMonthYear(iso) {
   const d = toDate(iso);
   if (!d) return 'นำเข้าจากข้อมูลเก่า';
