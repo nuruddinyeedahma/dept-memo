@@ -6,57 +6,30 @@ import Payment from '../models/Payment.js';
 import { requireAuth, requireRole } from '../lib/auth.js';
 import {
   outstandingDebtOf,
-  pendingBillTotalOf,
   getShopPrices,
   effectivePriceOf,
   getOrCreateOpenBill,
   serializeBill,
   getShopById,
   billTotal,
+  getShopsSummaryMap,
+  summaryFor,
 } from '../lib/domain.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('customer'));
 
 router.get('/shops', async (req, res) => {
-  const shops = await Shop.find().sort({ name: 1 });
-  const result = [];
-  for (const shop of shops) {
-    const [outstandingDebt, pendingBillTotal] = await Promise.all([
-      outstandingDebtOf(shop._id),
-      pendingBillTotalOf(shop._id),
-    ]);
-    const lastBill = await Bill.findOne({ shopId: shop._id, status: 'cleared', imported: false }).sort({
-      clearedAt: -1,
-    });
-    const lastPayment = await Payment.findOne({ shopId: shop._id }).sort({ paidAt: -1 });
-    let lastActivityKind = null;
-    let lastActivityAt = null;
-    let lastActivityAmount = null;
-    let lastActivityEntryCount = null;
-    if (lastBill && (!lastPayment || lastBill.clearedAt > lastPayment.paidAt)) {
-      lastActivityKind = 'bill';
-      lastActivityAt = lastBill.clearedAt;
-      lastActivityEntryCount = lastBill.entries.length;
-    } else if (lastPayment) {
-      lastActivityKind = 'payment';
-      lastActivityAt = lastPayment.paidAt;
-      lastActivityAmount = lastPayment.amount;
-    }
-    result.push({
+  const [shops, maps] = await Promise.all([Shop.find().sort({ name: 1 }), getShopsSummaryMap()]);
+  res.json(
+    shops.map((shop) => ({
       id: shop._id,
       name: shop.name,
       phone: shop.phone,
       note: shop.note,
-      outstandingDebt,
-      pendingBillTotal,
-      lastActivityKind,
-      lastActivityAt,
-      lastActivityAmount,
-      lastActivityEntryCount,
-    });
-  }
-  res.json(result);
+      ...summaryFor(shop._id, maps),
+    }))
+  );
 });
 
 function toShopDto(shop) {
@@ -93,15 +66,15 @@ router.delete('/shops/:shopId', async (req, res) => {
 });
 
 router.get('/summary', async (req, res) => {
-  const shops = await Shop.find();
+  const [shops, maps] = await Promise.all([Shop.find(), getShopsSummaryMap()]);
   let totalOutstanding = 0;
   let shopsWithDebt = 0;
   let totalPendingBills = 0;
   for (const shop of shops) {
-    const debt = await outstandingDebtOf(shop._id);
-    totalOutstanding += debt;
-    if (debt > 0) shopsWithDebt += 1;
-    totalPendingBills += await pendingBillTotalOf(shop._id);
+    const { outstandingDebt, pendingBillTotal } = summaryFor(shop._id, maps);
+    totalOutstanding += outstandingDebt;
+    if (outstandingDebt > 0) shopsWithDebt += 1;
+    totalPendingBills += pendingBillTotal;
   }
   const startOfMonth = new Date();
   startOfMonth.setDate(1);

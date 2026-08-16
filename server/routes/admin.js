@@ -4,7 +4,7 @@ import User from '../models/User.js';
 import Shop from '../models/Shop.js';
 import Item from '../models/Item.js';
 import { requireAuth, requireRole } from '../lib/auth.js';
-import { outstandingDebtOf, pendingBillTotalOf, getShopById } from '../lib/domain.js';
+import { outstandingDebtOf, getShopById, getShopsSummaryMap, summaryFor } from '../lib/domain.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('admin'));
@@ -72,19 +72,16 @@ router.delete('/users/:id', async (req, res) => {
 // ---------- Shops ----------
 
 router.get('/shops', async (req, res) => {
-  const shops = await Shop.find().sort({ name: 1 });
-  const result = [];
-  for (const shop of shops) {
-    result.push({
+  const [shops, maps] = await Promise.all([Shop.find().sort({ name: 1 }), getShopsSummaryMap()]);
+  res.json(
+    shops.map((shop) => ({
       id: shop._id,
       name: shop.name,
       phone: shop.phone,
       note: shop.note,
-      outstandingDebt: await outstandingDebtOf(shop._id),
-      pendingBillTotal: await pendingBillTotalOf(shop._id),
-    });
-  }
-  res.json(result);
+      ...summaryFor(shop._id, maps),
+    }))
+  );
 });
 
 function toShopDto(shop) {

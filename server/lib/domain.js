@@ -23,6 +23,78 @@ export async function pendingBillTotalOf(shopId) {
   return bills.reduce((s, b) => s + billTotal(b), 0);
 }
 
+// Same numbers as outstandingDebtOf/pendingBillTotalOf, but for every shop in a
+// handful of aggregate queries total instead of ~6 round trips per shop - the
+// per-shop loop this replaced was the main source of slow list-page loads.
+export async function getShopsSummaryMap() {
+  const debtByShop = new Map();
+  const pendingByShop = new Map();
+  const freeByShop = new Map();
+  const lastByShop = new Map();
+
+  const debtAgg = await Bill.aggregate([
+    { $match: { status: 'cleared', paymentId: null } },
+    { $unwind: '$entries' },
+    { $group: { _id: '$shopId', total: { $sum: { $multiply: ['$entries.unitPrice', '$entries.quantity'] } } } },
+  ]);
+  for (const row of debtAgg) debtByShop.set(String(row._id), row.total);
+
+  const pendingAgg = await Bill.aggregate([
+    { $match: { status: 'open' } },
+    { $unwind: '$entries' },
+    { $group: { _id: '$shopId', total: { $sum: { $multiply: ['$entries.unitPrice', '$entries.quantity'] } } } },
+  ]);
+  for (const row of pendingAgg) pendingByShop.set(String(row._id), row.total);
+
+  const referencedPaymentIds = await Bill.distinct('paymentId', { paymentId: { $ne: null } });
+  const freeAgg = await Payment.aggregate([
+    { $match: { _id: { $nin: referencedPaymentIds } } },
+    { $group: { _id: '$shopId', total: { $sum: '$amount' } } },
+  ]);
+  for (const row of freeAgg) freeByShop.set(String(row._id), row.total);
+
+  const lastAgg = await Bill.aggregate([
+    { $match: { status: 'cleared', imported: false } },
+    {
+      $project: {
+        shopId: 1,
+        kind: { $literal: 'bill' },
+        occurredAt: '$clearedAt',
+        amount: { $sum: { $map: { input: '$entries', as: 'e', in: { $multiply: ['$$e.unitPrice', '$$e.quantity'] } } } },
+        entryCount: { $size: '$entries' },
+      },
+    },
+    {
+      $unionWith: {
+        coll: 'payments',
+        pipeline: [
+          { $project: { shopId: 1, kind: { $literal: 'payment' }, occurredAt: '$paidAt', amount: 1, entryCount: { $literal: null } } },
+        ],
+      },
+    },
+    { $sort: { occurredAt: -1 } },
+    { $group: { _id: '$shopId', doc: { $first: '$$ROOT' } } },
+  ]);
+  for (const row of lastAgg) lastByShop.set(String(row._id), row.doc);
+
+  return { debtByShop, pendingByShop, freeByShop, lastByShop };
+}
+
+export function summaryFor(shopId, maps) {
+  const key = String(shopId);
+  const outstandingDebt = (maps.debtByShop.get(key) ?? 0) - (maps.freeByShop.get(key) ?? 0);
+  const pendingBillTotal = maps.pendingByShop.get(key) ?? 0;
+  const last = maps.lastByShop.get(key) ?? null;
+  return {
+    outstandingDebt,
+    pendingBillTotal,
+    lastActivityKind: last?.kind ?? null,
+    lastActivityAt: last?.occurredAt ?? null,
+    lastActivityAmount: last?.kind === 'payment' ? last.amount : null,
+    lastActivityEntryCount: last?.kind === 'bill' ? last.entryCount : null,
+  };
+}
+
 // Items visible to a shop: active, and either global (no shopIds) or explicitly listed.
 export async function getShopPrices(shopId) {
   const items = await Item.find({
