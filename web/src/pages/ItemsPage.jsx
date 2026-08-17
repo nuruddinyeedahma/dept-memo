@@ -91,7 +91,7 @@ export default function ItemsPage() {
         ) : visible.length === 0 ? (
           <p className="empty-state">ไม่พบสินค้า</p>
         ) : (
-          <div className="price-panel" style={{ paddingBottom: 130 }}>
+          <div className="price-panel">
             {visible.map((item) => (
               <button
                 key={item.id}
@@ -110,6 +110,7 @@ export default function ItemsPage() {
             ))}
           </div>
         )}
+        <div style={{ height: 130 }} />
       </div>
 
       <div style={{ flex: 1 }} />

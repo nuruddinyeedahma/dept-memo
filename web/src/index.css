@@ -505,7 +505,11 @@ a:hover {
   left: 50%;
   transform: translateX(-50%);
   bottom: 90px;
-  width: calc(100% - 40px);
+  /* .app caps at 480px (see .app rule) but isn't the containing block for
+     fixed-position descendants, so this has to mirror that cap by hand -
+     otherwise the bar sizes off the raw viewport and overflows past .app's
+     edges in the 520-768px range where .app is narrower than the screen. */
+  width: min(calc(100% - 40px), 440px);
   display: flex;
   align-items: stretch;
   gap: 10px;
