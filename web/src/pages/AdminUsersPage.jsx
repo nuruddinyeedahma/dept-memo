@@ -108,7 +108,7 @@ export default function AdminUsersPage() {
         ) : (
           <div className="price-panel">
             {users.map((u) => (
-              <div className="price-row" key={u.id} style={{ cursor: 'pointer' }} onClick={() => openEdit(u)}>
+              <div className="price-row item-manage-row" key={u.id} onClick={() => openEdit(u)}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="price-row-name">{u.username}</div>
                   <div className="price-row-default tabular">

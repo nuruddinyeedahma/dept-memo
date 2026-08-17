@@ -1561,7 +1561,15 @@ button {
   touch-action: manipulation;
 }
 
+select {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 .fab,
+.fab-bar-btn,
+.fab-bar-dots,
+.fab-bar-menu button,
 .btn,
 .chip,
 .tab-btn,
@@ -1579,11 +1587,19 @@ button {
 .pay-row,
 .item-manage-row,
 .btn-pay-text,
-.btn-danger-text {
+.btn-danger-text,
+.back-arrow,
+.sort-btn,
+.change-override-toggle,
+.menu-card,
+.active-toggle-row {
   transition: transform .12s ease, opacity .12s ease, background-color .15s ease, border-color .15s ease;
 }
 
 .fab:active,
+.fab-bar-btn:active,
+.fab-bar-dots:active,
+.fab-bar-menu button:active,
 .btn:not(:disabled):active,
 .chip:active,
 .shop-row:active,
@@ -1598,7 +1614,14 @@ button {
 .history-entry:active,
 .item-manage-row:active,
 .btn-pay-text:active,
-.btn-danger-text:active {
+.btn-danger-text:active,
+.back-arrow:active,
+.tab-btn:active,
+.pay-row:active,
+.sort-btn:active,
+.change-override-toggle:active,
+.menu-card:active,
+.active-toggle-row:active {
   transform: scale(.96);
   opacity: .8;
 }
