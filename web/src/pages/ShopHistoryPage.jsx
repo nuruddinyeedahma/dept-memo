@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { shopApi } from '../shopApi.js';
-import { formatMoney, formatDateTimeThai, formatDateThai, thaiMonthLabel } from '../lib/format.js';
+import { formatMoney, formatDateTimeThai, thaiMonthLabel } from '../lib/format.js';
 import Loader from '../components/Loader.jsx';
+
+const WEEKDAY_FORMATTER = new Intl.DateTimeFormat('th-TH', { weekday: 'short' });
 
 function currentMonthKey() {
   const now = new Date();
@@ -15,9 +17,29 @@ function shiftMonth(monthKey, delta) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function SaleEntry({ sale }) {
+function daysInMonth(year, monthNum) {
+  return new Date(year, monthNum, 0).getDate();
+}
+
+function defaultDayForMonth(monthKey) {
+  const now = new Date();
+  return monthKey === currentMonthKey() ? now.getDate() : 1;
+}
+
+function saleDate(sale) {
+  return new Date(sale.createdAt.includes('T') ? sale.createdAt : sale.createdAt.replace(' ', 'T') + 'Z');
+}
+
+function saleStatusLabel(sale) {
+  if (!sale.customerOwed || sale.customerOwed <= 0) return null;
+  if (!sale.paymentId) return `ค้าง ${formatMoney(sale.customerOwed)} บาท`;
+  if (sale.paymentKind === 'rollup') return 'ยอดย้ายไปบิลใหม่';
+  return 'ชำระแล้ว';
+}
+
+function SaleEntry({ sale, onSelect }) {
   return (
-    <div className="history-entry">
+    <div className="history-entry" onClick={onSelect ? () => onSelect(sale) : undefined}>
       <div className="history-entry-top">
         <div>
           <div className="history-entry-title">
@@ -60,43 +82,41 @@ export default function ShopHistoryPage() {
   const [month, setMonth] = useState(currentMonthKey());
   const [summary, setSummary] = useState(null);
   const [sales, setSales] = useState(null);
-  const [mode, setMode] = useState('month');
-  const [expandedDays, setExpandedDays] = useState(new Set());
+  const [mode, setMode] = useState('daily');
+  const [selectedDay, setSelectedDay] = useState(() => defaultDayForMonth(currentMonthKey()));
+  const [selectedSale, setSelectedSale] = useState(null);
 
   useEffect(() => {
     setSummary(null);
     setSales(null);
-    setExpandedDays(new Set());
+    setSelectedDay(defaultDayForMonth(month));
     Promise.all([shopApi.getSummary(month), shopApi.getSales(month)]).then(([s, list]) => {
       setSummary(s);
       setSales(list);
     });
   }, [month]);
 
-  const dailyGroups = useMemo(() => {
-    if (!sales) return [];
-    const map = new Map();
-    for (const sale of sales) {
-      const d = new Date(sale.createdAt.includes('T') ? sale.createdAt : sale.createdAt.replace(' ', 'T') + 'Z');
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      if (!map.has(key)) map.set(key, { key, sales: [], total: 0 });
-      const group = map.get(key);
-      group.sales.push(sale);
-      group.total += sale.total;
-    }
-    return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1));
-  }, [sales]);
+  const [year, monthNum] = month.split('-').map(Number);
 
-  function toggleDay(key) {
-    setExpandedDays((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
+  const daySales = useMemo(() => {
+    if (!sales) return [];
+    return sales.filter((s) => {
+      const d = saleDate(s);
+      return d.getFullYear() === year && d.getMonth() === monthNum - 1 && d.getDate() === selectedDay;
     });
+  }, [sales, year, monthNum, selectedDay]);
+
+  const dayTotal = daySales.reduce((sum, s) => sum + s.total, 0);
+  const dayOwed = daySales.reduce((sum, s) => sum + (!s.paymentId ? s.customerOwed : 0), 0);
+
+  function jumpToToday() {
+    const todayKey = currentMonthKey();
+    if (month !== todayKey) setMonth(todayKey);
+    setSelectedDay(new Date().getDate());
   }
 
-  const [year, monthNum] = month.split('-').map(Number);
+  const dayOptions = Array.from({ length: daysInMonth(year, monthNum) }, (_, i) => i + 1);
+  const isToday = month === currentMonthKey() && selectedDay === new Date().getDate();
 
   return (
     <div className="app">
@@ -136,55 +156,134 @@ export default function ShopHistoryPage() {
             <div className="stat-value tabular">{summary ? formatMoney(summary.totalCustomerOwed) : '···'}</div>
           </div>
         </div>
+
+        {mode === 'daily' && (
+          <>
+            <div className="debt-line" style={{ marginTop: 14, gap: 8 }}>
+              <select
+                className="field-input"
+                style={{ flex: 1, padding: '9px 10px', fontSize: 14 }}
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(Number(e.target.value))}
+              >
+                {dayOptions.map((d) => (
+                  <option key={d} value={d}>
+                    วันที่ {d} ({WEEKDAY_FORMATTER.format(new Date(year, monthNum - 1, d))})
+                  </option>
+                ))}
+              </select>
+              {!isToday && (
+                <button
+                  className="icon-btn"
+                  style={{ width: 'auto', padding: '0 14px', fontSize: 14, whiteSpace: 'nowrap' }}
+                  onClick={jumpToToday}
+                  title="กลับมาวันนี้"
+                >
+                  วันนี้
+                </button>
+              )}
+            </div>
+
+            <div className="stat-row" style={{ marginTop: 10 }}>
+              <div className="stat-item">
+                <div className="stat-label">ยอดขายวันนี้</div>
+                <div className="stat-value tabular">{sales ? formatMoney(dayTotal) : '···'}</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-label">จำนวนรายการ</div>
+                <div className="stat-value tabular">{sales ? `${daySales.length} รายการ` : '···'}</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-label">ลูกค้าค้าง</div>
+                <div className="stat-value tabular">{sales ? formatMoney(dayOwed) : '···'}</div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="section-pad">
         <div className="chip-row">
-          <button className={`chip ${mode === 'month' ? 'active' : ''}`} onClick={() => setMode('month')}>
-            รายเดือน
-          </button>
           <button className={`chip ${mode === 'daily' ? 'active' : ''}`} onClick={() => setMode('daily')}>
             รายวัน
+          </button>
+          <button className={`chip ${mode === 'month' ? 'active' : ''}`} onClick={() => setMode('month')}>
+            รายเดือน
           </button>
         </div>
 
         {sales === null ? (
           <Loader />
-        ) : sales.length === 0 ? (
-          <p className="empty-state">ไม่มีรายการขายในเดือนนี้</p>
         ) : mode === 'month' ? (
-          <div className="history-month">
-            {sales.map((sale) => (
-              <SaleEntry key={sale._id} sale={sale} />
-            ))}
-          </div>
+          sales.length === 0 ? (
+            <p className="empty-state">ไม่มีรายการขายในเดือนนี้</p>
+          ) : (
+            <div className="history-month">
+              {sales.map((sale) => (
+                <SaleEntry key={sale._id} sale={sale} />
+              ))}
+            </div>
+          )
+        ) : daySales.length === 0 ? (
+          <p className="empty-state">ไม่มีรายการขายในวันนี้</p>
         ) : (
           <div className="history-month">
-            {dailyGroups.map((day) => (
-              <div key={day.key}>
-                <div className="history-entry" onClick={() => toggleDay(day.key)}>
-                  <div className="history-entry-top">
-                    <div>
-                      <div className="history-entry-title">{day.sales.length} รายการ</div>
-                      <div className="history-entry-date">
-                        {formatDateThai(day.sales[0].createdAt)} · {expandedDays.has(day.key) ? 'ซ่อนรายการ ▾' : 'ดูรายการ ▸'}
-                      </div>
-                    </div>
-                    <div className="history-entry-amount tabular">{formatMoney(day.total)}</div>
-                  </div>
-                </div>
-                {expandedDays.has(day.key) && (
-                  <div className="history-month" style={{ marginTop: 10 }}>
-                    {day.sales.map((sale) => (
-                      <SaleEntry key={sale._id} sale={sale} />
-                    ))}
-                  </div>
-                )}
-              </div>
+            {daySales.map((sale) => (
+              <SaleEntry key={sale._id} sale={sale} onSelect={setSelectedSale} />
             ))}
           </div>
         )}
       </div>
+
+      {selectedSale && (
+        <div className="modal-backdrop" onClick={() => setSelectedSale(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="serif">รายละเอียดรายการขาย</h2>
+            <div style={{ fontSize: 13, color: 'var(--muted-soft)' }}>
+              {formatDateTimeThai(selectedSale.createdAt)}
+              {selectedSale.customerName ? ` · ${selectedSale.customerName}` : ''}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {selectedSale.items.map((e, i) => (
+                <div className="row" key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                  <span>
+                    {e.itemName} × {e.quantity}
+                  </span>
+                  <span className="tabular">{formatMoney(e.unitPrice * e.quantity)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="totals-row" style={{ paddingTop: 10, borderTop: '1px solid #E6DAC3' }}>
+              <span style={{ fontWeight: 600, color: 'var(--ink)' }}>ยอดรวม</span>
+              <span className="tabular" style={{ fontFamily: "'Trirong', serif", fontSize: 20, fontWeight: 600, color: 'var(--ink)' }}>
+                {formatMoney(selectedSale.total)} บาท
+              </span>
+            </div>
+
+            {saleStatusLabel(selectedSale) && (
+              <div className="totals-row">
+                <span>สถานะ</span>
+                <span
+                  className="tabular"
+                  style={{ color: !selectedSale.paymentId ? 'var(--debt-red)' : 'var(--paid-green)' }}
+                >
+                  {saleStatusLabel(selectedSale)}
+                </span>
+              </div>
+            )}
+
+            {selectedSale.note && <div className="history-entry-note">{selectedSale.note}</div>}
+
+            <div className="modal-actions">
+              <button className="btn btn-dark" style={{ flex: 1 }} onClick={() => setSelectedSale(null)}>
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
