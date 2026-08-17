@@ -142,10 +142,10 @@ export default function ShopHistoryPage() {
         </div>
 
         {mode === 'daily' && (
-          <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 10 }}>
             <select
               className="field-input"
-              style={{ flex: 1, minWidth: 0, padding: '6px 8px', fontSize: 13 }}
+              style={{ width: 'auto', padding: '6px 8px', fontSize: 13 }}
               value={selectedDay}
               onChange={(e) => setSelectedDay(Number(e.target.value))}
             >
@@ -169,28 +169,27 @@ export default function ShopHistoryPage() {
         )}
 
         <div className="amount serif" style={{ marginTop: 6 }}>
-          {summary ? formatMoney(summary.totalSales) : '···'}
+          {!sales || !summary
+            ? '···'
+            : mode === 'daily'
+              ? formatMoney(dayTotal)
+              : formatMoney(summary.totalSales)}
           <span className="unit">บาท</span>
         </div>
 
-        <div className="stat-row" style={{ alignItems: 'center' }}>
+        <div className="stat-row">
           <div className="stat-item">
             <div className="stat-label">จำนวนรายการ</div>
-            <div className="stat-value tabular">{summary ? `${summary.saleCount} รายการ` : '···'}</div>
+            <div className="stat-value tabular">
+              {!sales || !summary ? '···' : mode === 'daily' ? `${daySales.length} รายการ` : `${summary.saleCount} รายการ`}
+            </div>
           </div>
           <div className="stat-item">
-            <div className="stat-label">ลูกค้าค้างรวม</div>
-            <div className="stat-value tabular">{summary ? formatMoney(summary.totalCustomerOwed) : '···'}</div>
-          </div>
-
-          {mode === 'daily' && (
-            <div className="stat-item" style={{ marginLeft: 'auto', textAlign: 'right' }}>
-              <div className="stat-label">สรุปวันที่ {selectedDay}</div>
-              <div className="stat-value tabular" style={{ fontSize: 17 }}>
-                {sales ? `${formatMoney(dayTotal)} บ. · ${daySales.length} รายการ · ค้าง ${formatMoney(dayOwed)}` : '···'}
-              </div>
+            <div className="stat-label">{mode === 'daily' ? 'ลูกค้าค้าง' : 'ลูกค้าค้างรวม'}</div>
+            <div className="stat-value tabular">
+              {!sales || !summary ? '···' : formatMoney(mode === 'daily' ? dayOwed : summary.totalCustomerOwed)}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
