@@ -91,7 +91,7 @@ export default function ItemsPage() {
         ) : visible.length === 0 ? (
           <p className="empty-state">ไม่พบสินค้า</p>
         ) : (
-          <div className="price-panel" style={{ paddingBottom: 110 }}>
+          <div className="price-panel" style={{ paddingBottom: 130 }}>
             {visible.map((item) => (
               <button
                 key={item.id}
@@ -115,37 +115,37 @@ export default function ItemsPage() {
       <div style={{ flex: 1 }} />
       <AdminNav />
 
-      {showFabMenu && (
-        <>
-          <div className="fab-menu-backdrop" onClick={() => setShowFabMenu(false)} />
-          <button
-            className="fab fab-menu-item"
-            style={{ bottom: 274 }}
-            onClick={() => {
-              setShowFabMenu(false);
-              navigate('/admin/items/categories');
-            }}
-          >
-            จัดการหมวดหมู่หลายรายการ
+      {showFabMenu && <div className="fab-menu-backdrop" onClick={() => setShowFabMenu(false)} />}
+      <div className="fab-bar">
+        <button className="btn fab-bar-btn" onClick={() => setShowAdd(true)}>
+          + เพิ่มสินค้าใหม่
+        </button>
+        <div style={{ position: 'relative' }}>
+          <button className="fab-bar-dots" onClick={() => setShowFabMenu((v) => !v)}>
+            ⋯
           </button>
-          <button
-            className="fab fab-menu-item"
-            style={{ bottom: 214 }}
-            onClick={() => {
-              setShowFabMenu(false);
-              setShowShopPicker(true);
-            }}
-          >
-            เลือกเข้าร้านหลายรายการ
-          </button>
-        </>
-      )}
-      <button className="fab fab-mini" onClick={() => setShowFabMenu((v) => !v)}>
-        ⋯
-      </button>
-      <button className="fab" onClick={() => setShowAdd(true)}>
-        <span style={{ fontSize: 18, lineHeight: 1 }}>+</span>เพิ่มสินค้าใหม่
-      </button>
+          {showFabMenu && (
+            <div className="fab-bar-menu">
+              <button
+                onClick={() => {
+                  setShowFabMenu(false);
+                  navigate('/admin/items/categories');
+                }}
+              >
+                จัดการหมวดหมู่หลายรายการ
+              </button>
+              <button
+                onClick={() => {
+                  setShowFabMenu(false);
+                  setShowShopPicker(true);
+                }}
+              >
+                เลือกเข้าร้านหลายรายการ
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {editItem && (
         <ItemSheet

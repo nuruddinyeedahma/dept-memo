@@ -158,47 +158,33 @@ export default function ShopHistoryPage() {
         </div>
 
         {mode === 'daily' && (
-          <>
-            <div className="debt-line" style={{ marginTop: 14, gap: 8 }}>
-              <select
-                className="field-input"
-                style={{ flex: 1, padding: '9px 10px', fontSize: 14 }}
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(Number(e.target.value))}
+          <div style={{ display: 'flex', marginTop: 14, gap: 8, alignItems: 'center' }}>
+            <select
+              className="field-input"
+              style={{ flex: 1, padding: '9px 10px', fontSize: 14 }}
+              value={selectedDay}
+              onChange={(e) => setSelectedDay(Number(e.target.value))}
+            >
+              {dayOptions.map((d) => (
+                <option key={d} value={d}>
+                  วันที่ {d} ({WEEKDAY_FORMATTER.format(new Date(year, monthNum - 1, d))})
+                </option>
+              ))}
+            </select>
+            {!isToday && (
+              <button
+                className="icon-btn"
+                style={{ width: 'auto', padding: '0 14px', fontSize: 14, whiteSpace: 'nowrap' }}
+                onClick={jumpToToday}
+                title="กลับมาวันนี้"
               >
-                {dayOptions.map((d) => (
-                  <option key={d} value={d}>
-                    วันที่ {d} ({WEEKDAY_FORMATTER.format(new Date(year, monthNum - 1, d))})
-                  </option>
-                ))}
-              </select>
-              {!isToday && (
-                <button
-                  className="icon-btn"
-                  style={{ width: 'auto', padding: '0 14px', fontSize: 14, whiteSpace: 'nowrap' }}
-                  onClick={jumpToToday}
-                  title="กลับมาวันนี้"
-                >
-                  วันนี้
-                </button>
-              )}
-            </div>
-
-            <div className="stat-row" style={{ marginTop: 10 }}>
-              <div className="stat-item">
-                <div className="stat-label">ยอดขายวันนี้</div>
-                <div className="stat-value tabular">{sales ? formatMoney(dayTotal) : '···'}</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-label">จำนวนรายการ</div>
-                <div className="stat-value tabular">{sales ? `${daySales.length} รายการ` : '···'}</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-label">ลูกค้าค้าง</div>
-                <div className="stat-value tabular">{sales ? formatMoney(dayOwed) : '···'}</div>
-              </div>
-            </div>
-          </>
+                วันนี้
+              </button>
+            )}
+            <span className="tabular" style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--gold-soft)' }}>
+              {sales ? `${formatMoney(dayTotal)} บ. · ${daySales.length} รายการ · ค้าง ${formatMoney(dayOwed)}` : '···'}
+            </span>
+          </div>
         )}
       </div>
 
