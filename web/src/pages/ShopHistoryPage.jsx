@@ -146,7 +146,7 @@ export default function ShopHistoryPage() {
           <span className="unit">บาท</span>
         </div>
 
-        <div className="stat-row">
+        <div className="stat-row" style={{ alignItems: 'center' }}>
           <div className="stat-item">
             <div className="stat-label">จำนวนรายการ</div>
             <div className="stat-value tabular">{summary ? `${summary.saleCount} รายการ` : '···'}</div>
@@ -155,37 +155,39 @@ export default function ShopHistoryPage() {
             <div className="stat-label">ลูกค้าค้างรวม</div>
             <div className="stat-value tabular">{summary ? formatMoney(summary.totalCustomerOwed) : '···'}</div>
           </div>
-        </div>
 
-        {mode === 'daily' && (
-          <div style={{ display: 'flex', marginTop: 14, gap: 8, alignItems: 'center' }}>
-            <select
-              className="field-input"
-              style={{ flex: 1, padding: '9px 10px', fontSize: 14 }}
-              value={selectedDay}
-              onChange={(e) => setSelectedDay(Number(e.target.value))}
-            >
-              {dayOptions.map((d) => (
-                <option key={d} value={d}>
-                  วันที่ {d} ({WEEKDAY_FORMATTER.format(new Date(year, monthNum - 1, d))})
-                </option>
-              ))}
-            </select>
-            {!isToday && (
-              <button
-                className="icon-btn"
-                style={{ width: 'auto', padding: '0 14px', fontSize: 14, whiteSpace: 'nowrap' }}
-                onClick={jumpToToday}
-                title="กลับมาวันนี้"
-              >
-                วันนี้
-              </button>
-            )}
-            <span className="tabular" style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--gold-soft)' }}>
-              {sales ? `${formatMoney(dayTotal)} บ. · ${daySales.length} รายการ · ค้าง ${formatMoney(dayOwed)}` : '···'}
-            </span>
-          </div>
-        )}
+          {mode === 'daily' && (
+            <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 150 }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <select
+                  className="field-input"
+                  style={{ flex: 1, minWidth: 0, padding: '4px 6px', fontSize: 12 }}
+                  value={selectedDay}
+                  onChange={(e) => setSelectedDay(Number(e.target.value))}
+                >
+                  {dayOptions.map((d) => (
+                    <option key={d} value={d}>
+                      วันที่ {d} ({WEEKDAY_FORMATTER.format(new Date(year, monthNum - 1, d))})
+                    </option>
+                  ))}
+                </select>
+                {!isToday && (
+                  <button
+                    className="icon-btn"
+                    style={{ width: 'auto', height: 'auto', padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap' }}
+                    onClick={jumpToToday}
+                    title="กลับมาวันนี้"
+                  >
+                    วันนี้
+                  </button>
+                )}
+              </div>
+              <span className="tabular" style={{ fontSize: 11, color: 'var(--gold-tint)' }}>
+                {sales ? `${formatMoney(dayTotal)} บ. · ${daySales.length} รายการ · ค้าง ${formatMoney(dayOwed)}` : '···'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="section-pad">

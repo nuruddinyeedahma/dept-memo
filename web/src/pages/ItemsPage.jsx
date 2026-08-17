@@ -120,9 +120,9 @@ export default function ItemsPage() {
         <button className="btn fab-bar-btn" onClick={() => setShowAdd(true)}>
           + เพิ่มสินค้าใหม่
         </button>
-        <div style={{ position: 'relative' }}>
+        <div className="fab-bar-dots-wrap">
           <button className="fab-bar-dots" onClick={() => setShowFabMenu((v) => !v)}>
-            ⋯
+            ⋮
           </button>
           {showFabMenu && (
             <div className="fab-bar-menu">

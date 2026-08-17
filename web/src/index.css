@@ -524,7 +524,7 @@ a:hover {
   }
 }
 
-.fab-bar-btn {
+.btn.fab-bar-btn {
   flex: 1;
   background: var(--cream-panel);
   border: 1px solid #C9B892;
@@ -532,9 +532,14 @@ a:hover {
   box-shadow: 0 10px 22px rgba(60, 40, 10, .18);
 }
 
+.fab-bar-dots-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .fab-bar-dots {
   width: 52px;
-  flex-shrink: 0;
+  height: 100%;
   border-radius: 14px;
   background: var(--cream-panel);
   border: 1px solid #C9B892;
