@@ -137,7 +137,7 @@ export default function AdminCategoriesPage() {
               </div>
             )}
 
-            {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+            {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
 
             <button
               className="btn btn-dark"

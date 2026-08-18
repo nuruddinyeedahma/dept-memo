@@ -189,7 +189,7 @@ export default function AdminUsersPage() {
                   ))}
                 </div>
               )}
-              {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+              {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline-gold" onClick={() => setShowAdd(false)}>
                   ยกเลิก
@@ -228,7 +228,7 @@ export default function AdminUsersPage() {
                   ))}
                 </div>
               )}
-              {editError && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{editError}</p>}
+              {editError && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{editError}</p>}
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline-gold" onClick={() => setEditUser(null)}>
                   ยกเลิก

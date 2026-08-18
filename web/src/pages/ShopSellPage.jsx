@@ -383,7 +383,7 @@ export default function ShopSellPage() {
           )}
         </div>
 
-        {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+        {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
         <button className="btn btn-dark" disabled={busy || cartEntries.length === 0} onClick={handleSave}>
           บันทึกการขาย
         </button>
@@ -556,7 +556,7 @@ export default function ShopSellPage() {
                   ))}
                 </div>
               )}
-              {addItemError && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{addItemError}</p>}
+              {addItemError && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{addItemError}</p>}
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline-gold" onClick={() => setShowAddItem(false)}>
                   ยกเลิก

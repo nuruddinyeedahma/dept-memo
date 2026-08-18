@@ -67,7 +67,7 @@ export default function EditShopSheet({ shop, onClose, onSaved, onDeleted, api =
             />
           </div>
 
-          {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+          {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
 
           <button type="submit" className="btn btn-dark" disabled={busy}>
             บันทึกการแก้ไข

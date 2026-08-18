@@ -140,7 +140,7 @@ export default function ShopPricesPage() {
                 ))}
               </div>
             )}
-            {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+            {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
             <button type="button" className="btn btn-dark" onClick={handleAddItem}>
               เพิ่มสินค้า
             </button>

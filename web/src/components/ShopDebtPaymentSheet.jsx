@@ -192,7 +192,7 @@ export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged 
               </div>
             )}
 
-            {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+            {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
           </>
         )}
 

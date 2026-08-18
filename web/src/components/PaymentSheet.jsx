@@ -142,7 +142,7 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
               style={{ flex: 1 }}
             />
           </div>
-          {quickError && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{quickError}</p>}
+          {quickError && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{quickError}</p>}
           <button className="btn btn-green" disabled={busy || !quickAmount} onClick={handleQuickPay}>
             บันทึกจ่ายหนี้ด่วน
           </button>
@@ -245,7 +245,7 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
               </div>
             )}
 
-            {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
+            {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
           </>
         )}
 

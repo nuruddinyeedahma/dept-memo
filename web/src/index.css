@@ -295,7 +295,7 @@ a:hover {
   color: #F3EBDA;
   font-weight: 600;
   border-color: var(--dark);
-  animation: pop-in .3s cubic-bezier(.34, 1.56, .64, 1);
+  animation: select-glow-dark .5s ease;
 }
 
 .sort-row {
@@ -324,7 +324,7 @@ a:hover {
   color: var(--gold-badge-text);
   border-color: var(--gold-badge-bg);
   font-weight: 600;
-  animation: pop-in .3s cubic-bezier(.34, 1.56, .64, 1);
+  animation: select-glow-gold .5s ease;
 }
 
 /* ---------- Shop list ---------- */
@@ -662,7 +662,7 @@ a:hover {
 .item-tile.active {
   background: var(--dark);
   border-color: var(--dark);
-  animation: pop-in .3s cubic-bezier(.34, 1.56, .64, 1);
+  animation: select-glow-dark .5s ease;
 }
 
 .item-tile .tile-name {
@@ -1310,6 +1310,8 @@ a:hover {
   border-radius: 4px;
   flex-shrink: 0;
   white-space: nowrap;
+  display: inline-block;
+  animation: badge-in .25s cubic-bezier(.34, 1.56, .64, 1);
 }
 .override-badge.scoped {
   background: #E3ECD9;
@@ -1473,6 +1475,8 @@ a:hover {
   border-radius: 4px;
   margin-left: 6px;
   vertical-align: middle;
+  display: inline-block;
+  animation: badge-in .25s cubic-bezier(.34, 1.56, .64, 1);
 }
 .paid-badge {
   background: #E3ECD9;
@@ -1714,10 +1718,21 @@ select {
   animation: modal-pop-in .16s ease;
 }
 
-@keyframes pop-in {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.06); }
-  100% { transform: scale(1); }
+/* Selection glow: a box-shadow ring flash rather than a transform bounce,
+   so it never fights the shared :active press-scale (both would otherwise
+   animate `transform` on the same element and cause a visible snap/flicker
+   when a tap both presses and selects in the same gesture). */
+@keyframes select-glow-dark {
+  0% { box-shadow: 0 0 0 0 rgba(31, 26, 20, .45); }
+  100% { box-shadow: 0 0 0 9px rgba(31, 26, 20, 0); }
+}
+@keyframes select-glow-gold {
+  0% { box-shadow: 0 0 0 0 rgba(138, 93, 20, .4); }
+  100% { box-shadow: 0 0 0 9px rgba(138, 93, 20, 0); }
+}
+@keyframes badge-in {
+  from { opacity: 0; transform: scale(.6); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* ---------- Success celebration (payment confirm, sale save) ---------- */
