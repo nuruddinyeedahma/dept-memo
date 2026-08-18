@@ -214,7 +214,7 @@ export default function ShopHistoryPage() {
           ) : (
             <div className="history-month">
               {sales.map((sale) => (
-                <SaleEntry key={sale._id} sale={sale} />
+                <SaleEntry key={sale._id} sale={sale} onSelect={setSelectedSale} />
               ))}
             </div>
           )
