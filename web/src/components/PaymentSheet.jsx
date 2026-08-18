@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { formatMoney, formatDateTimeThai } from '../lib/format.js';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 import Loader from '../components/Loader.jsx';
+import SuccessCheck from './SuccessCheck.jsx';
 
 export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
   useLockBodyScroll();
@@ -15,6 +16,7 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
   const [quickAmount, setQuickAmount] = useState('');
   const [quickNote, setQuickNote] = useState('');
   const [quickError, setQuickError] = useState('');
+  const [successAmount, setSuccessAmount] = useState(null);
 
   async function load() {
     const [billList, paymentList] = await Promise.all([api.getShopBills(shopId), api.getShopPayments(shopId)]);
@@ -56,10 +58,13 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
     setBusy(true);
     setError('');
     try {
+      const paidAmount = selectedTotal;
       const result = await api.createPayment(shopId, [...selected]);
       setSelected(new Set());
       await load();
       onChanged?.(result.outstandingDebt);
+      setSuccessAmount(paidAmount);
+      setTimeout(() => setSuccessAmount(null), 1100);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -81,6 +86,8 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
       setQuickNote('');
       await load();
       onChanged?.(result.outstandingDebt);
+      setSuccessAmount(value);
+      setTimeout(() => setSuccessAmount(null), 1100);
     } catch (err) {
       setQuickError(err.message);
     } finally {
@@ -156,7 +163,15 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
                 <div className="pay-list">
                   {unpaidBills.map((bill) => (
                     <label className="pay-row" key={bill.id}>
-                      <input type="checkbox" checked={selected.has(bill.id)} onChange={() => toggle(bill.id)} />
+                      <span className="checkbox-wrap">
+                        <input
+                          type="checkbox"
+                          className="checkbox-input"
+                          checked={selected.has(bill.id)}
+                          onChange={() => toggle(bill.id)}
+                        />
+                        <span className="check-visual" />
+                      </span>
                       <div className="pay-row-info">
                         <div className="pay-row-date">
                           {bill.imported ? 'นำเข้าจากข้อมูลเก่า' : formatDateTimeThai(bill.occurredAt)}
@@ -233,6 +248,8 @@ export default function PaymentSheet({ shopId, shopName, onClose, onChanged }) {
             {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
           </>
         )}
+
+        {successAmount !== null && <SuccessCheck label={`จ่ายหนี้ ${formatMoney(successAmount)} บาทแล้ว`} />}
       </div>
     </div>
   );

@@ -86,7 +86,15 @@ export default function ShopItemsBulkSheet({ shopId, shopName, onClose, onSaved 
             <div className="pay-list" style={{ maxHeight: '46vh' }}>
               {visible.map((item) => (
                 <label className="pay-row" key={item.id}>
-                  <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item.id)} />
+                  <span className="checkbox-wrap">
+                    <input
+                      type="checkbox"
+                      className="checkbox-input"
+                      checked={selected.has(item.id)}
+                      onChange={() => toggle(item.id)}
+                    />
+                    <span className="check-visual" />
+                  </span>
                   <div className="pay-row-info">
                     <div className="pay-row-date">{item.name}</div>
                     <div className="pay-row-sub">

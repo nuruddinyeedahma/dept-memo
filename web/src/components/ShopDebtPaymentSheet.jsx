@@ -3,6 +3,7 @@ import { shopApi } from '../shopApi.js';
 import { formatMoney, formatDateTimeThai } from '../lib/format.js';
 import useLockBodyScroll from '../hooks/useLockBodyScroll.js';
 import Loader from './Loader.jsx';
+import SuccessCheck from './SuccessCheck.jsx';
 
 export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged }) {
   useLockBodyScroll();
@@ -11,6 +12,7 @@ export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmUndoId, setConfirmUndoId] = useState(null);
+  const [successAmount, setSuccessAmount] = useState(null);
 
   async function load() {
     const result = await shopApi.getCustomerDebt(customerName);
@@ -46,10 +48,13 @@ export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged 
     setBusy(true);
     setError('');
     try {
+      const paidAmount = selectedTotal;
       await shopApi.payDebts(customerName, [...selected]);
       setSelected(new Set());
       await load();
       onChanged?.();
+      setSuccessAmount(paidAmount);
+      setTimeout(() => setSuccessAmount(null), 1100);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,7 +101,15 @@ export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged 
                 <div className="pay-list">
                   {unpaidSales.map((sale) => (
                     <label className="pay-row" key={sale.id}>
-                      <input type="checkbox" checked={selected.has(sale.id)} onChange={() => toggle(sale.id)} />
+                      <span className="checkbox-wrap">
+                        <input
+                          type="checkbox"
+                          className="checkbox-input"
+                          checked={selected.has(sale.id)}
+                          onChange={() => toggle(sale.id)}
+                        />
+                        <span className="check-visual" />
+                      </span>
                       <div className="pay-row-info">
                         <div className="pay-row-date">{formatDateTimeThai(sale.createdAt)}</div>
                         <div className="pay-row-sub">
@@ -182,6 +195,8 @@ export default function ShopDebtPaymentSheet({ customerName, onClose, onChanged 
             {error && <p style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
           </>
         )}
+
+        {successAmount !== null && <SuccessCheck label={`รับชำระ ${formatMoney(successAmount)} บาทแล้ว`} />}
       </div>
     </div>
   );

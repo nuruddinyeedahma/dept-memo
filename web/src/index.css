@@ -295,6 +295,7 @@ a:hover {
   color: #F3EBDA;
   font-weight: 600;
   border-color: var(--dark);
+  animation: pop-in .3s cubic-bezier(.34, 1.56, .64, 1);
 }
 
 .sort-row {
@@ -323,6 +324,7 @@ a:hover {
   color: var(--gold-badge-text);
   border-color: var(--gold-badge-bg);
   font-weight: 600;
+  animation: pop-in .3s cubic-bezier(.34, 1.56, .64, 1);
 }
 
 /* ---------- Shop list ---------- */
@@ -660,6 +662,7 @@ a:hover {
 .item-tile.active {
   background: var(--dark);
   border-color: var(--dark);
+  animation: pop-in .3s cubic-bezier(.34, 1.56, .64, 1);
 }
 
 .item-tile .tile-name {
@@ -1017,6 +1020,7 @@ a:hover {
   z-index: 60;
 }
 .sheet {
+  position: relative;
   width: 100%;
   max-width: 480px;
   background: var(--cream-panel);
@@ -1143,11 +1147,57 @@ a:hover {
 .pay-row:last-child {
   border-bottom: none;
 }
-.pay-row input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--gold);
+.checkbox-wrap {
+  position: relative;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
+}
+.checkbox-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.check-visual {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid var(--dashed-border);
+  background: var(--cream-panel);
+  pointer-events: none;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.check-visual::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 11px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transform-origin: 60% 50%;
+  opacity: 0;
+  transition: transform .22s cubic-bezier(.34, 1.56, .64, 1) .02s, opacity .1s ease;
+}
+.checkbox-input:checked + .check-visual {
+  background: var(--paid-green);
+  border-color: var(--paid-green);
+  animation: check-pop .28s cubic-bezier(.34, 1.56, .64, 1);
+}
+.checkbox-input:checked + .check-visual::after {
+  transform: rotate(45deg) scale(1);
+  opacity: 1;
+}
+@keyframes check-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 .pay-row-info {
   flex: 1;
@@ -1534,6 +1584,7 @@ a:hover {
   z-index: 60;
 }
 .modal {
+  position: relative;
   background: var(--cream-panel);
   border-radius: 16px;
   padding: 20px;
@@ -1592,7 +1643,8 @@ select {
 .sort-btn,
 .change-override-toggle,
 .menu-card,
-.active-toggle-row {
+.active-toggle-row,
+.pay-section-header button {
   transition: transform .12s ease, opacity .12s ease, background-color .15s ease, border-color .15s ease;
 }
 
@@ -1621,7 +1673,8 @@ select {
 .sort-btn:active,
 .change-override-toggle:active,
 .menu-card:active,
-.active-toggle-row:active {
+.active-toggle-row:active,
+.pay-section-header button:active {
   transform: scale(.96);
   opacity: .8;
 }
@@ -1659,6 +1712,87 @@ select {
 }
 .modal {
   animation: modal-pop-in .16s ease;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Success celebration (payment confirm, sale save) ---------- */
+.success-check-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 252, 244, .94);
+  border-radius: inherit;
+  z-index: 30;
+  animation: success-overlay-fade .3s ease both;
+}
+@keyframes success-overlay-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.success-check-circle {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: var(--paid-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(79, 107, 60, .35);
+  animation: success-circle-pop .4s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+@keyframes success-circle-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+.success-check-path {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: success-draw-check .3s ease .18s both;
+}
+@keyframes success-draw-check {
+  to { stroke-dashoffset: 0; }
+}
+.success-check-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  animation: success-label-fade .25s ease .32s both;
+}
+@keyframes success-label-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.success-burst-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  animation: success-burst .6s ease .05s both;
+}
+.success-burst-dot.d1 { background: var(--paid-green); --dx: -46px; --dy: -34px; }
+.success-burst-dot.d2 { background: var(--gold); --dx: 46px; --dy: -34px; }
+.success-burst-dot.d3 { background: var(--debt-red); --dx: -58px; --dy: 4px; }
+.success-burst-dot.d4 { background: var(--gold-soft); --dx: 58px; --dy: 4px; }
+.success-burst-dot.d5 { background: var(--paid-green); --dx: -30px; --dy: 42px; }
+.success-burst-dot.d6 { background: var(--gold); --dx: 30px; --dy: 42px; }
+@keyframes success-burst {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  55% { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

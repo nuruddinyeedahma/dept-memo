@@ -404,7 +404,24 @@ export default function ShopSellPage() {
       {showSuccessDialog && lastSaved && (
         <div className="modal-backdrop" onClick={() => setShowSuccessDialog(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="serif">บันทึกรายการขายแล้ว</h2>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div className="success-check-circle">
+                <svg viewBox="0 0 24 24" width="30" height="30">
+                  <path
+                    d="M4 12l5 5L20 6"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="success-check-path"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h2 className="serif" style={{ textAlign: 'center' }}>
+              บันทึกรายการขายแล้ว
+            </h2>
             <div className="totals-row">
               <span>ยอดรวม</span>
               <span className="value tabular">{formatMoney(lastSaved.total)} บาท</span>
