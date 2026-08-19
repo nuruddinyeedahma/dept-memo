@@ -316,4 +316,33 @@ router.get('/bills/:billId', async (req, res) => {
   res.json(serializeBill(bill));
 });
 
+// Only a cleared, unpaid bill can be corrected - once a payment has been
+// recorded against it, its total is load-bearing for that payment amount.
+router.put('/bills/:billId', async (req, res) => {
+  const bill = await Bill.findById(req.params.billId);
+  if (!bill) return res.status(404).json({ error: 'bill not found' });
+  if (bill.status !== 'cleared' || bill.paymentId) {
+    return res.status(400).json({ error: 'only unpaid, finalized bills can be edited' });
+  }
+
+  const { entries, note } = req.body ?? {};
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return res.status(400).json({ error: 'entries must be a non-empty array' });
+  }
+  const cleanEntries = entries.map((e) => ({
+    itemId: e.itemId || null,
+    itemName: String(e.itemName),
+    unitPrice: Number(e.unitPrice),
+    quantity: Number(e.quantity),
+  }));
+  if (cleanEntries.some((e) => !e.itemName || !Number.isFinite(e.unitPrice) || !Number.isInteger(e.quantity) || e.quantity <= 0)) {
+    return res.status(400).json({ error: 'invalid entry' });
+  }
+
+  bill.entries = cleanEntries;
+  if (note !== undefined) bill.note = note?.trim() || null;
+  await bill.save();
+  res.json(serializeBill(bill));
+});
+
 export default router;

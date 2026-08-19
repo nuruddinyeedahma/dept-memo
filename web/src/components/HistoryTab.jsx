@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { formatMoney, formatDateTimeThai, groupByThaiMonth } from '../lib/format.js';
 
@@ -9,6 +10,7 @@ const FILTERS = [
 ];
 
 export default function HistoryTab({ shopId }) {
+  const navigate = useNavigate();
   const [timeline, setTimeline] = useState([]);
   const [openId, setOpenId] = useState(null);
   const [billDetail, setBillDetail] = useState(null);
@@ -114,6 +116,19 @@ export default function HistoryTab({ shopId }) {
                       </div>
                     ))}
                     {entry.note && <div className="history-entry-note">หมายเหตุ: {entry.note}</div>}
+                    {!entry.paid && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-gold"
+                        style={{ marginTop: 8 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/shops/${shopId}/bills/${entry.id}/edit`);
+                        }}
+                      >
+                        แก้ไขบิล
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

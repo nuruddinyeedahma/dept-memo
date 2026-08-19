@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import ShopList from './pages/ShopList.jsx';
 import ShopDetail from './pages/ShopDetail.jsx';
 import CurrentBillPage from './pages/CurrentBillPage.jsx';
+import BillEditPage from './pages/BillEditPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import AdminShopsPage from './pages/AdminShopsPage.jsx';
 import AdminUsersPage from './pages/AdminUsersPage.jsx';
@@ -23,6 +24,7 @@ export default function App() {
       <Route path="/" element={<RoleRoute roles={['customer']}><ShopList /></RoleRoute>} />
       <Route path="/shops/:id" element={<RoleRoute roles={['customer']}><ShopDetail /></RoleRoute>} />
       <Route path="/shops/:id/bill" element={<RoleRoute roles={['customer']}><CurrentBillPage /></RoleRoute>} />
+      <Route path="/shops/:id/bills/:billId/edit" element={<RoleRoute roles={['customer']}><BillEditPage /></RoleRoute>} />
 
       <Route path="/admin" element={<RoleRoute roles={['admin']}><AdminShopsPage /></RoleRoute>} />
       <Route path="/admin/items" element={<RoleRoute roles={['admin']}><ItemsPage /></RoleRoute>} />

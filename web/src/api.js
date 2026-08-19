@@ -30,4 +30,5 @@ export const api = {
 
   getHistory: (shopId) => http.get(`${base}/shops/${shopId}/history`),
   getBill: (billId) => http.get(`${base}/bills/${billId}`),
+  updateBill: (billId, patch) => http.put(`${base}/bills/${billId}`, patch),
 };
