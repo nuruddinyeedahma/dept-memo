@@ -31,6 +31,7 @@ export default function App() {
 
       <Route path="/shop" element={<RoleRoute roles={['shop']}><ShopHomePage /></RoleRoute>} />
       <Route path="/shop/sell" element={<RoleRoute roles={['shop']}><ShopSellPage /></RoleRoute>} />
+      <Route path="/shop/sales/:id/edit" element={<RoleRoute roles={['shop']}><ShopSellPage /></RoleRoute>} />
       <Route path="/shop/history" element={<RoleRoute roles={['shop']}><ShopHistoryPage /></RoleRoute>} />
       <Route path="/shop/prices" element={<RoleRoute roles={['shop']}><ShopPricesPage /></RoleRoute>} />
       <Route path="/shop/debts" element={<RoleRoute roles={['shop']}><ShopDebtsPage /></RoleRoute>} />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { shopApi } from '../shopApi.js';
 import { formatMoney } from '../lib/format.js';
 import Loader from '../components/Loader.jsx';
@@ -25,7 +25,10 @@ function roundUpTo(n, step) {
 
 export default function ShopSellPage() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
+  const isEdit = Boolean(editId);
   const [items, setItems] = useState([]);
+  const [editLoading, setEditLoading] = useState(isEdit);
   const [existingDebts, setExistingDebts] = useState([]);
   const [cart, setCart] = useState(new Map());
   const [amountReceived, setAmountReceived] = useState('');
@@ -58,8 +61,28 @@ export default function ShopSellPage() {
   useEffect(() => {
     loadItems();
     shopApi.getDebts().then(setExistingDebts);
-    playClip(doorChimeAudio);
+    if (!isEdit) playClip(doorChimeAudio);
   }, []);
+
+  // Pre-fill the cart/checkout from the existing bill instead of starting empty.
+  useEffect(() => {
+    if (!isEdit) return;
+    shopApi
+      .getSale(editId)
+      .then((sale) => {
+        setCart(
+          new Map(
+            sale.items
+              .filter((i) => i.itemId)
+              .map((i) => [String(i.itemId), { itemId: i.itemId, itemName: i.itemName, unitPrice: i.unitPrice, quantity: i.quantity }])
+          )
+        );
+        setAmountReceived(String(sale.amountReceived));
+        setCustomerName(sale.customerName || '');
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setEditLoading(false));
+  }, [isEdit, editId]);
 
   // Hide the floating running-total once the checkout section itself is on screen -
   // it would otherwise sit fixed on top of it after "คิดเงิน" scrolls there.
@@ -99,9 +122,11 @@ export default function ShopSellPage() {
   const cartQty = useMemo(() => cartEntries.reduce((s, e) => s + e.quantity, 0), [cartEntries]);
   const total = useMemo(() => cartEntries.reduce((s, e) => s + e.unitPrice * e.quantity, 0), [cartEntries]);
 
+  // Editing an existing bill only ever touches that one sale - the rollup-into-
+  // today's-total behavior below is for new sales only, so skip it in edit mode.
   const matchedDebt = useMemo(
-    () => existingDebts.find((d) => d.customerName.trim().toLowerCase() === customerName.trim().toLowerCase()),
-    [existingDebts, customerName]
+    () => (isEdit ? null : existingDebts.find((d) => d.customerName.trim().toLowerCase() === customerName.trim().toLowerCase())),
+    [existingDebts, customerName, isEdit]
   );
   const oldOwed = matchedDebt?.totalOwed ?? 0;
   // Picking an existing debtor folds their open balance into today's total, so
@@ -147,13 +172,22 @@ export default function ShopSellPage() {
       setError('เลือกสินค้าอย่างน้อย 1 รายการ');
       return;
     }
-    if (needsName && !customerName.trim()) {
+    if (!isEdit && needsName && !customerName.trim()) {
       setError('ลูกค้ายังไม่จ่ายครบหรือมีการปรับเงินทอน กรุณาใส่ชื่อลูกค้า');
       setShowCustomerPicker(true);
       return;
     }
     setBusy(true);
     try {
+      if (isEdit) {
+        await shopApi.updateSale(editId, {
+          items: cartEntries,
+          amountReceived: received,
+          changeOverride: changeDiffers ? Number(changeOverrideValue) : undefined,
+        });
+        navigate('/shop/history');
+        return;
+      }
       await shopApi.createSale({
         items: cartEntries,
         amountReceived: received,
@@ -202,18 +236,22 @@ export default function ShopSellPage() {
       <div className="light-header">
         <div className="back-row" style={{ justifyContent: 'space-between' }}>
           <div className="back-row">
-            <button className="back-arrow" onClick={() => navigate('/shop')}>
+            <button className="back-arrow" onClick={() => navigate(isEdit ? '/shop/history' : '/shop')}>
               ←
             </button>
-            <div className="shop-title">สร้างรายการขาย</div>
+            <div className="shop-title">{isEdit ? 'แก้ไขบิล' : 'สร้างรายการขาย'}</div>
           </div>
-          <button
-            type="button"
-            className={`chip ${customerName ? 'active' : ''}`}
-            onClick={() => setShowCustomerPicker(true)}
-          >
-            {customerName || 'ลูกค้า'}
-          </button>
+          {isEdit ? (
+            customerName && <span className="chip active">{customerName}</span>
+          ) : (
+            <button
+              type="button"
+              className={`chip ${customerName ? 'active' : ''}`}
+              onClick={() => setShowCustomerPicker(true)}
+            >
+              {customerName || 'ลูกค้า'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -225,7 +263,7 @@ export default function ShopSellPage() {
           </div>
         )}
 
-        {loading ? (
+        {loading || editLoading ? (
           <Loader />
         ) : (
           <>
@@ -385,7 +423,7 @@ export default function ShopSellPage() {
 
         {error && <p className="shake" style={{ color: 'var(--debt-red)', fontSize: 13, margin: 0 }}>{error}</p>}
         <button className="btn btn-dark" disabled={busy || cartEntries.length === 0} onClick={handleSave}>
-          บันทึกการขาย
+          {isEdit ? 'บันทึกการแก้ไข' : 'บันทึกการขาย'}
         </button>
       </div>
 
