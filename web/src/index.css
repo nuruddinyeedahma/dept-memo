@@ -499,7 +499,11 @@ a:hover {
 .fab-menu-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 5;
+  /* Below .fab-bar (z-index 4) - otherwise this catches clicks meant for the
+     open menu, since .fab-bar-menu's z-index:6 is scoped inside .fab-bar's own
+     stacking context and can't outrank a sibling's z-index from in there. */
+  z-index: 3;
+  animation: backdrop-fade-in .18s ease;
 }
 
 .fab-bar {
@@ -566,6 +570,12 @@ a:hover {
   flex-direction: column;
   gap: 8px;
   z-index: 6;
+  animation: fab-menu-pop-in .16s cubic-bezier(.32, .72, 0, 1);
+}
+
+@keyframes fab-menu-pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .fab-bar-menu button {
