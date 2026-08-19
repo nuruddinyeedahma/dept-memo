@@ -8,8 +8,6 @@ export const shopApi = {
   setPrice: (itemId, price) => http.put(`${base}/prices/${itemId}`, { price }),
   clearPrice: (itemId) => http.delete(`${base}/prices/${itemId}`),
   createSale: (sale) => http.post(`${base}/sales`, sale),
-  getSale: (id) => http.get(`${base}/sales/${id}`),
-  updateSale: (id, sale) => http.put(`${base}/sales/${id}`, sale),
   getSales: (month) => http.get(`${base}/sales${month ? `?month=${month}` : ''}`),
   getSummary: (month) => http.get(`${base}/summary${month ? `?month=${month}` : ''}`),
 

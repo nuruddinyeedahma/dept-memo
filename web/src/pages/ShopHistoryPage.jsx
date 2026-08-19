@@ -271,15 +271,6 @@ export default function ShopHistoryPage() {
             {selectedSale.note && <div className="history-entry-note">{selectedSale.note}</div>}
 
             <div className="modal-actions">
-              {!selectedSale.paymentId && selectedSale.customerOwed > 0 && (
-                <button
-                  className="btn btn-outline-gold"
-                  style={{ flex: 1 }}
-                  onClick={() => navigate(`/shop/sales/${selectedSale._id}/edit`)}
-                >
-                  แก้ไขบิล
-                </button>
-              )}
               <button className="btn btn-dark" style={{ flex: 1 }} onClick={() => setSelectedSale(null)}>
                 ปิด
               </button>

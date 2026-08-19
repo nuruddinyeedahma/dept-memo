@@ -163,65 +163,6 @@ router.post('/sales', async (req, res) => {
   res.json(sale);
 });
 
-router.get('/sales/:id', async (req, res) => {
-  const shopId = myShopId(req, res);
-  if (!shopId) return;
-  const sale = await ShopSale.findOne({ _id: req.params.id, shopId });
-  if (!sale) return res.status(404).json({ error: 'sale not found' });
-  const [withKind] = await withPaymentKind([sale]);
-  res.json(withKind);
-});
-
-// Only unpaid bills (no payment/rollup attached yet) can be corrected - once
-// money has changed hands or the balance rolled into a newer sale, the totals
-// are load-bearing for that payment record and must not shift underneath it.
-router.put('/sales/:id', async (req, res) => {
-  const shopId = myShopId(req, res);
-  if (!shopId) return;
-  const sale = await ShopSale.findOne({ _id: req.params.id, shopId });
-  if (!sale) return res.status(404).json({ error: 'sale not found' });
-  if (sale.paymentId) return res.status(400).json({ error: 'sale is already paid, cannot edit' });
-  if (!(sale.customerOwed > 0)) return res.status(400).json({ error: 'only unpaid bills can be edited' });
-
-  const { items, amountReceived, note, changeOverride } = req.body ?? {};
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'items must be a non-empty array' });
-  }
-  const received = Number(amountReceived);
-  if (!Number.isFinite(received) || received < 0) return res.status(400).json({ error: 'invalid amountReceived' });
-
-  const cleanItems = items.map((i) => ({
-    itemId: i.itemId || null,
-    itemName: String(i.itemName),
-    unitPrice: Number(i.unitPrice),
-    quantity: Number(i.quantity),
-  }));
-  if (cleanItems.some((i) => !i.itemName || !Number.isFinite(i.unitPrice) || !Number.isInteger(i.quantity) || i.quantity <= 0)) {
-    return res.status(400).json({ error: 'invalid item in items' });
-  }
-
-  const total = cleanItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-  const computedChange = Math.max(0, received - total);
-  const customerOwed = Math.max(0, total - received);
-
-  let change = computedChange;
-  if (changeOverride !== undefined && changeOverride !== null && changeOverride !== '') {
-    const overridden = Number(changeOverride);
-    if (!Number.isFinite(overridden) || overridden < 0) return res.status(400).json({ error: 'invalid changeOverride' });
-    change = overridden;
-  }
-
-  sale.items = cleanItems;
-  sale.total = total;
-  sale.amountReceived = received;
-  sale.change = change;
-  sale.customerOwed = customerOwed;
-  if (note !== undefined) sale.note = note?.trim() || null;
-  await sale.save();
-
-  res.json(sale);
-});
-
 function monthRange(monthParam) {
   let year, month0;
   if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
